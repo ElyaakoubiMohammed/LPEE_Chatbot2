@@ -1,0 +1,7 @@
+Name: MAKHWD MEDCHAF
+Age: 26
+Occupation: Software engineer
+City: CASA
+Hobbies: hiking, reading, cooking
+Favorite programming languages: Python, JavaScript
+Spoken languages : german

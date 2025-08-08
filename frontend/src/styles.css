@@ -1,0 +1,89 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f9f9f9;
+    color: #111;
+}
+
+.app {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #e6e6fa;
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+button {
+    background-color: #4b4b70;
+    color: white;
+    border: none;
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button.active {
+    background-color: #c2f0c2;
+}
+
+.chat-box {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.messages {
+    width: 100%;
+    max-width: 700px;
+    margin-bottom: 20px;
+}
+
+.msg {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 10px;
+    background-color: #e6e6fa;
+}
+
+.msg.user {
+    background-color: #c2f0c2;
+    text-align: right;
+}
+
+.msg.assistant {
+    background-color: #e6e6fa;
+}
+
+input {
+    padding: 10px;
+    width: 70%;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+button {
+    padding: 10px;
+    width: 70%;
+    border-radius: 5px;
+    background-color: #4b4b70;
+    color: white;
+    cursor: pointer;
+}

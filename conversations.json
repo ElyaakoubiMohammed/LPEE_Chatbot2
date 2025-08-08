@@ -1,0 +1,15 @@
+{
+  "bb26a4bb-95c0-4c9f-a511-8970fa023a2f": {
+    "title": "Untitled",
+    "messages": [
+      {
+        "role": "user",
+        "content": "could you please give me details of MAKLA Widget 22052002 ?"
+      },
+      {
+        "role": "assistant",
+        "content": "According to the document content, here are the details of MAKLA Widget 22052002:\n\n* Color: BLUE\n* Weight: 2000 KG\n* Material: METAL\n* Function: RUNS FAST"
+      }
+    ]
+  }
+}

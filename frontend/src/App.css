@@ -1,0 +1,745 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+  color: #f0f0f0;
+  overflow: hidden;
+}
+
+.app-layout {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  transition: all 0.4s ease;
+  padding-left: 0;
+}
+
+.app-layout.sidebar-open {
+  padding-left: 280px;
+}
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  width: 280px;
+  min-width: 280px;
+  height: 100%;
+  background: linear-gradient(145deg, #121212, #1c1c1c);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease;
+  transform: translateX(0);
+}
+
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex-grow: 1;
+}
+
+.toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -40px;
+  background: #222;
+  border: none;
+  color: #ccc;
+  font-size: 1.2rem;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+  transition: background 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: #333;
+}
+
+.app-title {
+  font-family: 'Fira Code', monospace;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.5px;
+  color: #00ffcc;
+  text-shadow: 0 0 5px #00ffcc55;
+}
+
+.new-conversation-btn {
+  padding: 14px;
+  background: #00ffcc;
+  border: none;
+  border-radius: 10px;
+  color: #121212;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Fira Code';
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px #00ffcc33;
+}
+
+.new-conversation-btn:hover {
+  background: #1fffdd;
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px #00ffcc99;
+}
+
+.conversations-list {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.conversation-btn {
+  background: #222;
+  color: #f0f0f0;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: 'Fira Code';
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #333;
+}
+
+.conversation-btn:hover {
+  background: #333;
+  border-color: #00ffcc;
+  transform: translateX(4px);
+}
+
+/* For the message area */
+.chat-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  padding: 40px;
+  position: relative;
+  transition: all 0.4s ease;
+  overflow: hidden;
+  /* No scrollbars on the container */
+}
+
+/* For the message area */
+.message-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  /* Only allow vertical scrolling if content overflows */
+  padding-right: 20px;
+  /* Adds a little padding to prevent scrollbar */
+  max-height: calc(100vh - 200px);
+  /* Make sure it fits within the screen */
+}
+
+/* Scrollbar Fix for Webkit-based browsers (Chrome, Safari, etc.) */
+.message-area::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.message-area::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.chat-header h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 30px;
+}
+
+
+.empty-state {
+  color: #888;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-top: 40px;
+  opacity: 0.7;
+}
+
+.message {
+  padding: 16px 20px;
+  position: relative;
+
+  /* Important */
+  border-radius: 18px;
+  max-width: 100%;
+  /* Allow the message to take up the full width of the container */
+  /* Ensure the text wraps normally */
+  word-break: break-word;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.6s forwards;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  transition: transform 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.message.animate {
+  animation: fadeInUp 0.6s forwards;
+}
+
+.message.user {
+  background: linear-gradient(135deg, #00ffcc, #00ccaa);
+  color: #000;
+  margin-left: auto;
+  border-radius: 24px 8px 24px 24px;
+  border: 1px solid #00ffcc44;
+}
+
+.message.assistant {
+  background: #2b2b2b;
+  color: #f0f0f0;
+  margin-right: auto;
+  border-radius: 8px 24px 24px 24px;
+  border: 1px solid #333;
+}
+
+.message:hover {
+  transform: translateY(0);
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.thinking-indicator {
+  font-size: 1.2rem;
+  color: #00ffcc;
+  text-align: center;
+  margin-top: 10px;
+  font-style: italic;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.thinking-indicator span {
+  display: inline-block;
+  font-size: 1.6rem;
+  animation: bounce 1.2s infinite;
+  animation-timing-function: ease-in-out;
+}
+
+.thinking-indicator span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.thinking-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.thinking-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+
+.input-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 1px solid #333;
+  background-color: transparent;
+  padding-bottom: 10px;
+  /* Padding to give some space below */
+}
+
+.message-input {
+  flex-grow: 1;
+  padding: 16px 20px;
+  border: 2px solid #00ffcc;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  outline: none;
+  background-color: transparent;
+  color: #fff;
+  font-family: 'Fira Code';
+  resize: none;
+  /* Disable resizing */
+  overflow-y: hidden;
+  /* Prevent vertical scrolling */
+  transition: all 0.3s ease;
+  height: auto;
+  min-height: 50px;
+  max-height: 120px;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+}
+
+.delete-btn {
+  background-color: transparent;
+  color: #f0f0f0;
+  border: 2px solid #f0f0f0;
+  padding: 8px 16px;
+  font-size: 1rem;
+  font-family: 'Fira Code';
+  font-weight: 600;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 15px;
+  /* Aligns next to the title button */
+}
+
+.delete-btn:hover {
+  background-color: #f0f0f0;
+  color: #121212;
+  transform: scale(1.05);
+}
+
+.delete-btn:active {
+  background-color: #ccc;
+  transform: scale(0.98);
+}
+
+.message-input:focus {
+  background-color: #333;
+  border-color: #00ffcc;
+  /* Keep the green border on focus */
+  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+  /* Enhance the green shadow on focus */
+}
+
+.message-input::placeholder {
+  color: #ccc;
+  /* Lighter placeholder text */
+  font-style: italic;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.message-input:focus::placeholder {
+  opacity: 0.5;
+  /* Slightly fade the placeholder when focused */
+}
+
+.send-btn {
+  padding: 16px 24px;
+  background-color: #00ffcc;
+  border: none;
+  border-radius: 12px;
+  color: #000;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-family: 'Fira Code';
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.send-btn:hover {
+  background-color: #1fffdd;
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #00ffcc99;
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chat-container {
+    padding: 20px;
+    transition: all 0.4s ease;
+  }
+
+  .app-layout.sidebar-open .chat-container {
+    transform: translateX(120px);
+  }
+
+  .sidebar {
+    z-index: 101;
+  }
+}
+
+
+
+/* For the message content textarea */
+.message-content textarea {
+  width: 100%;
+  background: #222;
+  color: #f0f0f0;
+  border-radius: 10px;
+  border: none;
+  padding: 10px;
+  font-size: 1.05rem;
+  resize: none;
+}
+
+/* Save button for editing */
+.save-edit-btn {
+  background: #00ffcc;
+  color: #121212;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 10px;
+  transition: background 0.3s ease;
+}
+
+.save-edit-btn:hover {
+  background: #1fffdd;
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px #00ffcc99;
+}
+
+.message.editing {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #00ffcc;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+}
+
+.message-content {
+  max-width: 100%;
+}
+
+.message .edit-btn {
+  position: absolute;
+  top: 30px;
+  right: 6px;
+  margin-top: 6px;
+  background: transparent;
+  border: none;
+  color: #00ffcc;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.message:hover .edit-btn {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-2px);
+}
+
+.message .edit-btn:hover {
+  color: #1fffdd;
+  transform: translateY(-4px);
+}
+
+.message-input {
+  width: 100%;
+  padding: 16px;
+  background: #2b2b2b;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #f0f0f0;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  resize: none;
+  transition: border 0.3s ease, background 0.3s ease;
+}
+
+.message-input:focus {
+  border-color: #00ffcc;
+  background: #333;
+}
+
+.thinking-indicator {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #00ffcc;
+  margin-top: 20px;
+  text-align: center;
+}
+
+input,
+textarea {
+  outline: none;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #00ffcc;
+}
+
+.message.removed {
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+
+
+.message .copy-btn {
+  position: absolute;
+  top: 8px;
+  background: #2a2a2a;
+  color: #ccc;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  font-size: 14px;
+}
+
+.message .copy-btn:hover {
+  background: #555;
+  color: white;
+}
+
+.message .copy-btn.copied {
+  background: #2e7d32;
+  color: white;
+  animation: checkmark 0.6s ease forwards;
+}
+
+.message .copy-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.message .copy-btn:hover::after {
+  opacity: 1;
+}
+
+/* Default invisible copy button, visible on message hover */
+.message .copy-btn {
+  opacity: 0;
+}
+
+.message:hover .copy-btn {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Keyframes for the checkmark animation */
+@keyframes checkmark {
+  0% {
+    content: "📋";
+  }
+
+  50% {
+    content: "✔️";
+    scale: 1.2;
+  }
+
+  100% {
+    content: "✔️";
+    scale: 1;
+  }
+}
+
+/* Position for user message copy button (left side) */
+.message.user .copy-btn {
+  left: -30px;
+  right: auto;
+}
+
+/* Position for assistant message copy button (right side) */
+.message.assistant .copy-btn {
+  right: -30px;
+  left: auto;
+}
+
+
+.message .message-actions {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  /* normal order: top to bottom */
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.message .copy-btn,
+.message .edit-btn {
+  background: #2a2a2a;
+  color: #ccc;
+  border: none;
+  border-radius: 4px;
+  margin-top: -10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 14px;
+  pointer-events: auto;
+}
+
+.message:hover .copy-btn,
+.message:hover .edit-btn {
+  opacity: 1;
+}
+
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cancel-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #dcdcdc;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  letter-spacing: 0.2px;
+}
+
+.cancel-edit-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffffcc;
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.cancel-edit-btn:active {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+
+
+.mic-btn {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.mic-btn:hover {
+  color: #ff4b5c;
+  transform: scale(1.1);
+}
+
+.mic-btn.active {
+  color: #ff4b5c;
+  transform: scale(1.1);
+}
+
+.mic-btn svg {
+  display: block;
+}
+
+.mic-btn,
+.send-btn {
+  flex-shrink: 0;
+  /* prevent shrinking */
+  height: 36px;
+  /* make buttons same height */
+  width: 36px;
+  /* same width for consistency */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.input-buttons {
+  display: flex;
+  gap: 0px;
+  align-items: center;
+
+}
+
+
+.image-btn {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.image-btn:hover {
+  transform: scale(1.1);
+}
