@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 * {
   margin: 0;
@@ -9,10 +9,11 @@
 html,
 body {
   height: 100%;
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
-  color: #f0f0f0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
   overflow: hidden;
+  font-weight: 400;
 }
 
 .app-layout {
@@ -21,12 +22,13 @@ body {
   height: 100vh;
   max-width: 100vw;
   max-height: 100vh;
-  transition: all 0.4s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   padding-left: 0;
+  position: relative;
 }
 
 .app-layout.sidebar-open {
-  padding-left: 280px;
+  padding-left: 320px;
 }
 
 /* SIDEBAR */
@@ -35,19 +37,20 @@ body {
   top: 0;
   left: 0;
   z-index: 100;
-  width: 280px;
-  min-width: 280px;
+  width: 320px;
+  min-width: 320px;
   height: 100%;
-  background: linear-gradient(145deg, #121212, #1c1c1c);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 30px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 32px 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 20px;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
-  transition: transform 0.3s ease;
+  gap: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(0);
 }
 
@@ -58,182 +61,295 @@ body {
 .sidebar-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   flex-grow: 1;
 }
 
 .toggle-btn {
   position: absolute;
-  top: 20px;
-  right: -40px;
-  background: #222;
-  border: none;
-  color: #ccc;
-  font-size: 1.2rem;
-  padding: 10px;
-  border-radius: 8px;
+  top: 24px;
+  right: -48px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 1.1rem;
+  padding: 12px;
+  border-radius: 12px;
   cursor: pointer;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
-  transition: background 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
 }
 
 .toggle-btn:hover {
-  background: #333;
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .app-title {
-  font-family: 'Fira Code', monospace;
-  font-size: 2rem;
-  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.2rem;
+  font-weight: 700;
   text-align: center;
-  letter-spacing: 0.5px;
-  color: #00ffcc;
-  text-shadow: 0 0 5px #00ffcc55;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .new-conversation-btn {
-  padding: 14px;
-  background: #00ffcc;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border: none;
-  border-radius: 10px;
-  color: #121212;
+  border-radius: 16px;
+  color: #ffffff;
   font-size: 1rem;
   font-weight: 600;
-  font-family: 'Fira Code';
+  font-family: 'Inter', sans-serif;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 10px #00ffcc33;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.new-conversation-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.new-conversation-btn:hover::before {
+  left: 100%;
 }
 
 .new-conversation-btn:hover {
-  background: #1fffdd;
   transform: translateY(-2px);
-  box-shadow: 0 0 15px #00ffcc99;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+}
+
+.new-conversation-btn:active {
+  transform: translateY(0);
 }
 
 .conversations-list {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   overflow-y: auto;
+  padding-right: 4px;
+}
+
+.conversations-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.conversations-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.conversations-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.conversations-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+}
+
+.conversation-item:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .conversation-btn {
-  background: #222;
-  color: #f0f0f0;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-family: 'Fira Code';
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #333;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .conversation-btn:hover {
-  background: #333;
-  border-color: #00ffcc;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
   transform: translateX(4px);
 }
 
-/* For the message area */
+.delete-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 10px;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: scale(1.05);
+}
+
+.delete-btn:active {
+  transform: scale(0.95);
+}
+
+/* MAIN CHAT AREA */
 .chat-container {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  background: #1e1e1e;
-  padding: 40px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  padding: 32px 40px;
   position: relative;
-  transition: all 0.4s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  /* No scrollbars on the container */
+  border-radius: 24px 0 0 0;
+  margin-left: 1px;
 }
 
-/* For the message area */
-.message-area {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  overflow-y: auto;
-  /* Only allow vertical scrolling if content overflows */
-  padding-right: 20px;
-  /* Adds a little padding to prevent scrollbar */
-  max-height: calc(100vh - 200px);
-  /* Make sure it fits within the screen */
-}
-
-/* Scrollbar Fix for Webkit-based browsers (Chrome, Safari, etc.) */
-.message-area::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
-}
-
-.message-area::-webkit-scrollbar-thumb {
-  background: transparent;
+.chat-header {
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .chat-header h2 {
   font-size: 1.8rem;
   font-weight: 600;
   color: #ffffff;
-  margin-bottom: 30px;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+.message-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  padding-right: 16px;
+  max-height: calc(100vh - 280px);
+  scroll-behavior: smooth;
+}
+
+.message-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-area::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.message-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.message-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
 
 .empty-state {
-  color: #888;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 1.1rem;
   text-align: center;
-  margin-top: 40px;
-  opacity: 0.7;
+  margin-top: 60px;
+  font-weight: 400;
+  line-height: 1.6;
 }
 
 .message {
-  padding: 16px 20px;
+  padding: 20px 24px;
   position: relative;
-
-  /* Important */
-  border-radius: 18px;
-  max-width: 100%;
-  /* Allow the message to take up the full width of the container */
-  /* Ensure the text wraps normally */
+  border-radius: 20px;
+  max-width: 85%;
   word-break: break-word;
   opacity: 0;
-  transform: translateY(10px);
-  animation: fadeInUp 0.6s forwards;
-  font-size: 1.05rem;
-  line-height: 1.5;
-  transition: transform 0.3s ease;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  font-size: 1rem;
+  line-height: 1.6;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
+  font-weight: 400;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .message.animate {
-  animation: fadeInUp 0.6s forwards;
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .message.user {
-  background: linear-gradient(135deg, #00ffcc, #00ccaa);
-  color: #000;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
   margin-left: auto;
-  border-radius: 24px 8px 24px 24px;
-  border: 1px solid #00ffcc44;
+  border-radius: 20px 20px 4px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
 }
 
 .message.assistant {
-  background: #2b2b2b;
-  color: #f0f0f0;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
   margin-right: auto;
-  border-radius: 8px 24px 24px 24px;
-  border: 1px solid #333;
+  border-radius: 20px 20px 20px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .message:hover {
-  transform: translateY(0);
-  box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.message.user:hover {
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
 }
 
 @keyframes fadeInUp {
@@ -244,22 +360,24 @@ body {
 }
 
 .thinking-indicator {
-  font-size: 1.2rem;
-  color: #00ffcc;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
   text-align: center;
-  margin-top: 10px;
+  margin-top: 20px;
   font-style: italic;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  font-weight: 500;
 }
 
 .thinking-indicator span {
   display: inline-block;
-  font-size: 1.6rem;
-  animation: bounce 1.2s infinite;
-  animation-timing-function: ease-in-out;
+  font-size: 1.4rem;
+  animation: bounce 1.4s infinite;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  color: #8b5cf6;
 }
 
 .thinking-indicator span:nth-child(1) {
@@ -275,363 +393,189 @@ body {
 }
 
 @keyframes bounce {
-
-  0%,
-  100% {
+  0%, 100% {
     transform: translateY(0);
   }
-
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
 }
 
-
 .input-area {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 1px solid #333;
-  background-color: transparent;
-  padding-bottom: 10px;
-  /* Padding to give some space below */
+  align-items: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 20px;
 }
 
 .message-input {
   flex-grow: 1;
   padding: 16px 20px;
-  border: 2px solid #00ffcc;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  outline: none;
-  background-color: transparent;
-  color: #fff;
-  font-family: 'Fira Code';
-  resize: none;
-  /* Disable resizing */
-  overflow-y: hidden;
-  /* Prevent vertical scrolling */
-  transition: all 0.3s ease;
-  height: auto;
-  min-height: 50px;
-  max-height: 120px;
-  box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
-}
-
-.delete-btn {
-  background-color: transparent;
-  color: #f0f0f0;
-  border: 2px solid #f0f0f0;
-  padding: 8px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
   font-size: 1rem;
-  font-family: 'Fira Code';
-  font-weight: 600;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-left: 15px;
-  /* Aligns next to the title button */
-}
-
-.delete-btn:hover {
-  background-color: #f0f0f0;
-  color: #121212;
-  transform: scale(1.05);
-}
-
-.delete-btn:active {
-  background-color: #ccc;
-  transform: scale(0.98);
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  resize: none;
+  overflow-y: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: auto;
+  min-height: 52px;
+  max-height: 120px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .message-input:focus {
-  background-color: #333;
-  border-color: #00ffcc;
-  /* Keep the green border on focus */
-  box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
-  /* Enhance the green shadow on focus */
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
 .message-input::placeholder {
-  color: #ccc;
-  /* Lighter placeholder text */
-  font-style: italic;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: normal;
+  font-weight: 400;
 }
 
 .message-input:focus::placeholder {
-  opacity: 0.5;
-  /* Slightly fade the placeholder when focused */
+  color: rgba(255, 255, 255, 0.3);
 }
 
-.send-btn {
-  padding: 16px 24px;
-  background-color: #00ffcc;
-  border: none;
-  border-radius: 12px;
-  color: #000;
-  font-size: 1.1rem;
-  font-weight: 600;
-  font-family: 'Fira Code';
-  cursor: pointer;
-  transition: all 0.3s ease;
+.input-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.send-btn:hover {
-  background-color: #1fffdd;
-  transform: scale(1.05);
-  box-shadow: 0 0 15px #00ffcc99;
-}
-
-
-/* Responsive */
-@media (max-width: 768px) {
-  .chat-container {
-    padding: 20px;
-    transition: all 0.4s ease;
-  }
-
-  .app-layout.sidebar-open .chat-container {
-    transform: translateX(120px);
-  }
-
-  .sidebar {
-    z-index: 101;
-  }
-}
-
-
-
-/* For the message content textarea */
-.message-content textarea {
-  width: 100%;
-  background: #222;
-  color: #f0f0f0;
-  border-radius: 10px;
-  border: none;
-  padding: 10px;
-  font-size: 1.05rem;
-  resize: none;
-}
-
-/* Save button for editing */
-.save-edit-btn {
-  background: #00ffcc;
-  color: #121212;
-  border: none;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-top: 10px;
-  transition: background 0.3s ease;
-}
-
-.save-edit-btn:hover {
-  background: #1fffdd;
-  transform: translateY(-2px);
-  box-shadow: 0 0 15px #00ffcc99;
-}
-
-.message.editing {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #00ffcc;
-  box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
-}
-
-.message-content {
-  max-width: 100%;
-}
-
-.message .edit-btn {
-  position: absolute;
-  top: 30px;
-  right: 6px;
-  margin-top: 6px;
-  background: transparent;
-  border: none;
-  color: #00ffcc;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  opacity: 0;
-  visibility: hidden;
-}
-
-.message:hover .edit-btn {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(-2px);
-}
-
-.message .edit-btn:hover {
-  color: #1fffdd;
-  transform: translateY(-4px);
-}
-
-.message-input {
-  width: 100%;
-  padding: 16px;
-  background: #2b2b2b;
-  border: 1px solid #333;
-  border-radius: 8px;
-  color: #f0f0f0;
-  font-size: 1rem;
-  font-family: 'Inter', sans-serif;
-  resize: none;
-  transition: border 0.3s ease, background 0.3s ease;
-}
-
-.message-input:focus {
-  border-color: #00ffcc;
-  background: #333;
-}
-
-.thinking-indicator {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #00ffcc;
-  margin-top: 20px;
-  text-align: center;
-}
-
-input,
-textarea {
-  outline: none;
-}
-
-input[type="text"]:focus,
-textarea:focus {
-  border-color: #00ffcc;
-}
-
-.message.removed {
-  opacity: 0;
-  transition: opacity 0.2s ease-out;
-}
-
-
-
-.message .copy-btn {
-  position: absolute;
-  top: 8px;
-  background: #2a2a2a;
-  color: #ccc;
-  border: none;
-  border-radius: 4px;
-  width: 24px;
-  height: 24px;
+.mic-btn, .image-btn, .send-btn {
+  flex-shrink: 0;
+  height: 48px;
+  width: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
-  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1.2rem;
+  border: none;
+  position: relative;
+  overflow: hidden;
 }
 
-.message .copy-btn:hover {
-  background: #555;
-  color: white;
+.mic-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
-.message .copy-btn.copied {
-  background: #2e7d32;
-  color: white;
-  animation: checkmark 0.6s ease forwards;
+.mic-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.05);
 }
 
-.message .copy-btn::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  font-size: 12px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
+.mic-btn.active {
+  background: #ef4444;
+  color: #ffffff;
+  animation: pulse 2s infinite;
 }
 
-.message .copy-btn:hover::after {
-  opacity: 1;
-}
-
-/* Default invisible copy button, visible on message hover */
-.message .copy-btn {
-  opacity: 0;
-}
-
-.message:hover .copy-btn {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Keyframes for the checkmark animation */
-@keyframes checkmark {
+@keyframes pulse {
   0% {
-    content: "📋";
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
   }
-
-  50% {
-    content: "✔️";
-    scale: 1.2;
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
   }
-
   100% {
-    content: "✔️";
-    scale: 1;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
 
-/* Position for user message copy button (left side) */
-.message.user .copy-btn {
-  left: -30px;
-  right: auto;
+.image-btn {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
-/* Position for assistant message copy button (right side) */
-.message.assistant .copy-btn {
-  right: -30px;
-  left: auto;
+.image-btn:hover {
+  background: rgba(34, 197, 94, 0.2);
+  transform: scale(1.05);
 }
 
+.send-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
 
+.send-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.send-btn:hover::before {
+  left: 100%;
+}
+
+.send-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.send-btn:active {
+  transform: scale(0.95);
+}
+
+/* MESSAGE ACTIONS */
 .message .message-actions {
   position: absolute;
-  left: 0;
-  top: 8px;
+  left: -40px;
+  top: 12px;
   display: flex;
   flex-direction: column;
-  /* normal order: top to bottom */
-  gap: 8px;
+  gap: 6px;
   pointer-events: auto;
   z-index: 10;
 }
 
+.message.user .message-actions {
+  left: auto;
+  right: -40px;
+}
+
 .message .copy-btn,
 .message .edit-btn {
-  background: #2a2a2a;
-  color: #ccc;
-  border: none;
-  border-radius: 4px;
-  margin-top: -10px;
-  width: 24px;
-  height: 24px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 14px;
   pointer-events: auto;
 }
@@ -639,107 +583,195 @@ textarea:focus {
 .message:hover .copy-btn,
 .message:hover .edit-btn {
   opacity: 1;
+  transform: translateX(0);
 }
 
+.message .copy-btn:hover,
+.message .edit-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.message .copy-btn.copied {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+/* EDITING STATES */
+.message.editing {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.message-content {
+  max-width: 100%;
+}
+
+.message-content textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  resize: none;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.message-content textarea:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
 
 .edit-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.save-edit-btn {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #ffffff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.save-edit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
 }
 
 .cancel-edit-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 14px 24px;
+  gap: 8px;
+  padding: 10px 16px;
   font-family: 'Inter', sans-serif;
-  font-size: 15px;
+  font-size: 0.9rem;
   font-weight: 500;
-  color: #dcdcdc;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
-  letter-spacing: 0.2px;
 }
 
 .cancel-edit-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffffcc;
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .cancel-edit-btn:active {
   transform: translateY(0);
-  background: rgba(255, 255, 255, 0.08);
 }
 
-
-
-.mic-btn {
-  background: transparent;
-  border: none;
-  color: #aaa;
-  cursor: pointer;
-  transition: color 0.3s ease, transform 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border-radius: 6px;
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .app-layout.sidebar-open {
+    padding-left: 0;
+  }
+  
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+  
+  .chat-container {
+    padding: 20px 16px;
+    border-radius: 0;
+    margin-left: 0;
+  }
+  
+  .message {
+    max-width: 95%;
+    padding: 16px 18px;
+  }
+  
+  .input-area {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .mic-btn, .image-btn, .send-btn {
+    height: 44px;
+    width: 44px;
+  }
 }
 
-.mic-btn:hover {
-  color: #ff4b5c;
-  transform: scale(1.1);
+@media (max-width: 480px) {
+  .app-title {
+    font-size: 1.8rem;
+  }
+  
+  .chat-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .message {
+    font-size: 0.95rem;
+    padding: 14px 16px;
+  }
+  
+  .message-input {
+    font-size: 0.95rem;
+    padding: 14px 16px;
+  }
 }
 
-.mic-btn.active {
-  color: #ff4b5c;
-  transform: scale(1.1);
+/* UTILITY CLASSES */
+.message.removed {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.mic-btn svg {
-  display: block;
+input, textarea {
+  outline: none;
 }
 
-.mic-btn,
-.send-btn {
-  flex-shrink: 0;
-  /* prevent shrinking */
-  height: 36px;
-  /* make buttons same height */
-  width: 36px;
-  /* same width for consistency */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #8b5cf6;
 }
 
-.input-buttons {
-  display: flex;
-  gap: 0px;
-  align-items: center;
-
+/* ENHANCED VISUAL EFFECTS */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+  border-radius: inherit;
 }
 
-
-.image-btn {
-  background: none;
-  border: none;
-  font-size: 1.2em;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.image-btn:hover {
-  transform: scale(1.1);
+.chat-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  pointer-events: none;
+  border-radius: inherit;
 }
