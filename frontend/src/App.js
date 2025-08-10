@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
-import { MessageCircle, Plus, Trash2, Send, Mic, Image, Edit3, Copy, Check } from 'lucide-react';
+import { MessageCircle, Plus, Trash2, Send, Mic, Image, Edit3, Copy, Check, Sparkles, Zap, User, Bot } from 'lucide-react';
 
 function App() {
   const [conversations, setConversations] = useState({});
@@ -309,15 +309,26 @@ function App() {
   // ===== RETURN JSX =====
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-theme="premium">
+      <div className="background-effects">
+        <div className="gradient-orb orb-1"></div>
+        <div className="gradient-orb orb-2"></div>
+        <div className="gradient-orb orb-3"></div>
+      </div>
+      
       <div className={`app-layout ${sidebarOpen ? 'sidebar-open' : ''}`}>
       {/* SIDEBAR */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-glow"></div>
         <div className="sidebar-content">
           <div className="sidebar-header">
             <div className="app-logo">
-              <MessageCircle className="logo-icon" />
+              <div className="logo-container">
+                <Sparkles className="logo-icon" />
+                <div className="logo-pulse"></div>
+              </div>
               <h1 className="app-title">LPEE</h1>
+              <div className="beta-badge">Pro</div>
             </div>
             <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <div className="hamburger">
@@ -329,8 +340,10 @@ function App() {
           </div>
           
           <button className="new-conversation-btn" onClick={createNewConversation}>
+            <div className="btn-glow"></div>
             <Plus className="btn-icon" />
             <span>New Chat</span>
+            <Zap className="btn-accent" />
           </button>
           
           <div className="conversations-list">
@@ -340,8 +353,10 @@ function App() {
                   className={`conversation-btn ${currentConversation === cid ? 'active' : ''}`}
                   onClick={() => switchConversation(cid)}
                 >
+                  <div className="conversation-indicator"></div>
                   <MessageCircle className="conversation-icon" />
                   <span className="conversation-title">{conversations[cid]?.title || "New Chat"}</span>
+                  {currentConversation === cid && <div className="active-pulse"></div>}
                 </button>
                 <button
                   className="delete-btn"
@@ -357,6 +372,7 @@ function App() {
 
       {/* MAIN CONTENT */}
       <main className="chat-container">
+        <div className="chat-glow"></div>
         <header className="chat-header">
           <div className="header-content">
             <button 
@@ -371,6 +387,10 @@ function App() {
             </button>
             <h2 className="chat-title">{conversations[currentConversation]?.title || "New Conversation"}</h2>
             <div className="header-actions">
+              <div className="connection-status">
+                <div className="status-dot"></div>
+                <span>Connected</span>
+              </div>
               <div className="status-indicator online"></div>
             </div>
           </div>
@@ -380,11 +400,23 @@ function App() {
           {currentConversation &&
             conversations[currentConversation].messages?.length === 0 && (
               <div className="empty-state">
+                <div className="empty-animation">
+                  <div className="floating-icons">
+                    <MessageCircle className="float-icon icon-1" />
+                    <Sparkles className="float-icon icon-2" />
+                    <Zap className="float-icon icon-3" />
+                  </div>
+                </div>
                 <div className="empty-icon">
-                  <MessageCircle />
+                  <Bot />
                 </div>
                 <h3>Start a conversation</h3>
                 <p>Send a message to begin chatting with LPEE</p>
+                <div className="empty-suggestions">
+                  <div className="suggestion-chip">Ask me anything</div>
+                  <div className="suggestion-chip">Upload an image</div>
+                  <div className="suggestion-chip">Use voice input</div>
+                </div>
               </div>
             )}
             
@@ -396,7 +428,15 @@ function App() {
                 onContextMenu={(e) => handleRightClick(e, index)}
               >
                 <div className={`message ${msg.role} ${editingMessage === index ? 'editing' : ''}`}>
+                  <div className="message-avatar">
+                    {msg.role === 'user' ? <User className="avatar-icon" /> : <Bot className="avatar-icon" />}
+                    <div className="avatar-glow"></div>
+                  </div>
                   <div className="message-content">
+                    <div className="message-header">
+                      <span className="message-sender">{msg.role === 'user' ? 'You' : 'LPEE'}</span>
+                      <span className="message-time">now</span>
+                    </div>
                     {editingMessage === index ? (
                       <div className="edit-container">
                         <textarea
@@ -411,6 +451,7 @@ function App() {
                             onClick={handleEditSave}
                             disabled={thinking}
                           >
+                            <div className="btn-shine"></div>
                             <Check className="btn-icon" />
                             {thinking ? "Saving..." : "Save"}
                           </button>
@@ -437,6 +478,7 @@ function App() {
                       onClick={() => copyToClipboard(msg.content)}
                       title="Copy message"
                     >
+                      <div className="btn-ripple"></div>
                       <Copy className="action-icon" />
                     </button>
 
@@ -449,6 +491,7 @@ function App() {
                         }}
                         title="Edit message"
                       >
+                        <div className="btn-ripple"></div>
                         <Edit3 className="action-icon" />
                       </button>
                     )}
@@ -459,20 +502,29 @@ function App() {
             
           {thinking && (
             <div className="thinking-indicator">
+              <div className="thinking-avatar">
+                <Bot className="avatar-icon" />
+                <div className="thinking-pulse"></div>
+              </div>
+              <div className="thinking-content">
+                <div className="thinking-header">
+                  <span className="thinking-sender">LPEE</span>
+                  <span className="thinking-status">is thinking...</span>
+                </div>
               <div className="typing-animation">
                 <div className="typing-dot"></div>
                 <div className="typing-dot"></div>
                 <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
               </div>
-              <span className="typing-text">LPEE is typing...</span>
+              </div>
             </div>
           )}
         </section>
 
         <footer className="input-area">
-
-
           <div className="input-container">
+            <div className="input-glow"></div>
             <div className="input-wrapper">
               <textarea
                 ref={textareaRef}
@@ -491,10 +543,12 @@ function App() {
                   onClick={toggleRecording}
                   title={isRecording ? "Stop recording" : "Start recording"}
                 >
+                  <div className="mic-pulse"></div>
                   <Mic className="action-icon" />
                 </button>
 
                 <label htmlFor="image-upload" className="action-btn image-btn" title="Upload image">
+                  <div className="btn-ripple"></div>
                   <Image className="action-icon" />
                 </label>
                 <input
@@ -510,7 +564,9 @@ function App() {
                   onClick={sendMessage}
                   disabled={!message.trim() && !selectedImage}
                 >
+                  <div className="send-glow"></div>
                   <Send className="send-icon" />
+                  <div className="send-trail"></div>
                 </button>
               </div>
             </div>
