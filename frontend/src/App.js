@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
+import { MessageCircle, Plus, Trash2, Send, Mic, Image, Edit3, Copy, Check } from 'lucide-react';
 
 function App() {
   const [conversations, setConversations] = useState({});
@@ -308,188 +309,215 @@ function App() {
   // ===== RETURN JSX =====
 
   return (
-    <div className={`app-layout ${sidebarOpen ? 'sidebar-open' : ''}`}>
+    <div className="app-container">
+      <div className={`app-layout ${sidebarOpen ? 'sidebar-open' : ''}`}>
       {/* SIDEBAR */}
-      <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-content">
-          <h1 className="app-title">LPEE</h1>
-          <button className="new-conversation-btn" onClick={createNewConversation}>+ New Chat</button>
+          <div className="sidebar-header">
+            <div className="app-logo">
+              <MessageCircle className="logo-icon" />
+              <h1 className="app-title">LPEE</h1>
+            </div>
+            <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              <div className="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </button>
+          </div>
+          
+          <button className="new-conversation-btn" onClick={createNewConversation}>
+            <Plus className="btn-icon" />
+            <span>New Chat</span>
+          </button>
+          
           <div className="conversations-list">
             {Object.keys(conversations).map((cid) => (
               <div key={cid} className="conversation-item">
                 <button
-                  className="conversation-btn"
+                  className={`conversation-btn ${currentConversation === cid ? 'active' : ''}`}
                   onClick={() => switchConversation(cid)}
                 >
-                  {conversations[cid]?.title || "Chat"}
+                  <MessageCircle className="conversation-icon" />
+                  <span className="conversation-title">{conversations[cid]?.title || "New Chat"}</span>
                 </button>
                 <button
                   className="delete-btn"
                   onClick={() => deleteConversation(cid)}
                 >
-                  🗑️
+                  <Trash2 className="delete-icon" />
                 </button>
               </div>
             ))}
           </div>
         </div>
-        <button className="toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
-          {sidebarOpen ? '«' : '»'}
-        </button>
       </aside>
 
       {/* MAIN CONTENT */}
       <main className="chat-container">
         <header className="chat-header">
-          <h2>{conversations[currentConversation]?.title || "Chat"}</h2>
+          <div className="header-content">
+            <button 
+              className="mobile-menu-btn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <div className="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </button>
+            <h2 className="chat-title">{conversations[currentConversation]?.title || "New Conversation"}</h2>
+            <div className="header-actions">
+              <div className="status-indicator online"></div>
+            </div>
+          </div>
         </header>
+        
         <section className="message-area">
           {currentConversation &&
             conversations[currentConversation].messages?.length === 0 && (
-              <div className="empty-state">No messages yet. Start the conversation.</div>
+              <div className="empty-state">
+                <div className="empty-icon">
+                  <MessageCircle />
+                </div>
+                <h3>Start a conversation</h3>
+                <p>Send a message to begin chatting with LPEE</p>
+              </div>
             )}
+            
           {currentConversation &&
             conversations[currentConversation].messages.map((msg, index) => (
               <div
                 key={index}
-                className={`message ${msg.role} animate${editingMessage === index ? ' editing' : ''}`}
+                className={`message-wrapper ${msg.role}`}
                 onContextMenu={(e) => handleRightClick(e, index)}
               >
-                <div className="message-actions">
-                  <button
-                    className="copy-btn"
-                    data-tooltip="Copy"
-                    onClick={() => copyToClipboard(msg.content)}
-                    aria-label="Copy message"
-                  >
-                    📋
-                  </button>
-                  {msg.role === 'user' && (
+                <div className={`message ${msg.role} ${editingMessage === index ? 'editing' : ''}`}>
+                  <div className="message-content">
+                    {editingMessage === index ? (
+                      <div className="edit-container">
+                        <textarea
+                          autoFocus
+                          value={editedMessage}
+                          onChange={(e) => setEditedMessage(e.target.value)}
+                          className="edit-textarea"
+                        />
+                        <div className="edit-actions">
+                          <button
+                            className="save-btn"
+                            onClick={handleEditSave}
+                            disabled={thinking}
+                          >
+                            <Check className="btn-icon" />
+                            {thinking ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            className="cancel-btn"
+                            onClick={() => {
+                              setEditingMessage(null);
+                              setEditedMessage('');
+                            }}
+                            disabled={thinking}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="message-text">{msg.content}</div>
+                    )}
+                  </div>
+                  
+                  <div className="message-actions">
                     <button
-                      className="edit-btn"
-                      data-tooltip="Edit"
-                      onClick={() => {
-                        setEditingMessage(index);
-                        setEditedMessage(msg.content);
-                      }}
-                      aria-label="Edit message"
+                      className="action-btn copy-btn"
+                      onClick={() => copyToClipboard(msg.content)}
+                      title="Copy message"
                     >
-                      ✏️
+                      <Copy className="action-icon" />
                     </button>
-                  )}
-                </div>
 
-                <div className="message-content">
-                  {editingMessage === index ? (
-                    <textarea
-                      autoFocus
-                      value={editedMessage}
-                      onChange={(e) => setEditedMessage(e.target.value)}
-                    />
-                  ) : (
-                    msg.content
-                  )}
+                    {msg.role === 'user' && (
+                      <button
+                        className="action-btn edit-btn"
+                        onClick={() => {
+                          setEditingMessage(index);
+                          setEditedMessage(msg.content);
+                        }}
+                        title="Edit message"
+                      >
+                        <Edit3 className="action-icon" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-
-                {editingMessage === index && (
-                  <>
-                    <button
-                      className="save-edit-btn"
-                      onClick={handleEditSave}
-                      disabled={thinking}
-                    >
-                      {thinking ? "Saving..." : "Save"}
-                    </button>
-                    <button
-                      className="cancel-edit-btn"
-                      onClick={() => {
-                        setEditingMessage(null);
-                        setEditedMessage('');
-                      }}
-                      disabled={thinking}
-                    >
-                      <span role="img" aria-label="Cancel">✖️</span> Cancel
-                    </button>
-                  </>
-                )}
               </div>
             ))}
+            
           {thinking && (
             <div className="thinking-indicator">
-              <span>•</span>
-              <span>•</span>
-              <span>•</span>
+              <div className="typing-animation">
+                <div className="typing-dot"></div>
+                <div className="typing-dot"></div>
+                <div className="typing-dot"></div>
+              </div>
+              <span className="typing-text">LPEE is typing...</span>
             </div>
           )}
         </section>
 
         <footer className="input-area">
-          <textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your message..."
-            className="message-input"
-            rows={1}
-            disabled={editingMessage !== null}
-          />
-          <div className="input-buttons">
-            <button
-              className={`mic-btn ${isRecording ? 'active' : ''}`}
-              onClick={toggleRecording}
-              title={isRecording ? "Stop recording" : "Start recording"}
-            >
-              {isRecording ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="6" y="6" width="12" height="12" />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 1v11" />
-                  <path d="M19 11a7 7 0 0 1-14 0" />
-                  <line x1="12" y1="19" x2="12" y2="23" />
-                  <line x1="8" y1="23" x2="16" y2="23" />
-                </svg>
-              )}
-            </button>
 
-            {/* Image Upload Button */}
-            <label htmlFor="image-upload" className="image-btn" title="Upload image">
-              🖼️
-            </label>
-            <input
-              type="file"
-              id="image-upload"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={(e) => handleImageUpload(e)}
-            />
 
-            <button className="send-btn" onClick={sendMessage}>➤</button>
+          <div className="input-container">
+            <div className="input-wrapper">
+              <textarea
+                ref={textareaRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                className="message-input"
+                rows={1}
+                disabled={editingMessage !== null}
+              />
+              
+              <div className="input-actions">
+                <button
+                  className={`action-btn mic-btn ${isRecording ? 'recording' : ''}`}
+                  onClick={toggleRecording}
+                  title={isRecording ? "Stop recording" : "Start recording"}
+                >
+                  <Mic className="action-icon" />
+                </button>
+
+                <label htmlFor="image-upload" className="action-btn image-btn" title="Upload image">
+                  <Image className="action-icon" />
+                </label>
+                <input
+                  type="file"
+                  id="image-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleImageUpload(e)}
+                />
+
+                <button 
+                  className="send-btn" 
+                  onClick={sendMessage}
+                  disabled={!message.trim() && !selectedImage}
+                >
+                  <Send className="send-icon" />
+                </button>
+              </div>
+            </div>
           </div>
         </footer>
       </main>
+      </div>
     </div>
   );
 }
