@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
-import { MessageCircle, Plus, Trash2, Send, Mic, Image as ImageIcon, Edit3, Copy, Check } from 'lucide-react';
+import { MessageCircle, Plus, Trash2, Send, Mic, Image, Edit3, Copy, Check } from 'lucide-react';
 
 function App() {
   const [conversations, setConversations] = useState({});
@@ -118,8 +118,10 @@ function App() {
 
     try {
       let response;
+      let isImage = false;
 
       if (selectedImage) {
+        isImage = true;
 
         const formData = new FormData();
         formData.append('image', selectedImage);
@@ -493,7 +495,7 @@ function App() {
                 </button>
 
                 <label htmlFor="image-upload" className="action-btn image-btn" title="Upload image">
-                  <ImageIcon className="action-icon" />
+                  <Image className="action-icon" />
                 </label>
                 <input
                   type="file"
