@@ -286,6 +286,7 @@ function App() {
                       </span>
                     </div>
                     {currentConversationId === id && <div className="active-indicator"></div>}
+                    }
                   </button>
                   <button
                     className="delete-btn"
@@ -451,6 +452,7 @@ function App() {
                   >
                     <Mic />
                     {isRecording && <div className="recording-pulse"></div>}
+                    }
                   </button>
                   
                   <label className="action-btn image-btn">
