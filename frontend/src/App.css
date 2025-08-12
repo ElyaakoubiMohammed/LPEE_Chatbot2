@@ -370,10 +370,13 @@ body {
 }
 
 @keyframes thinkingBounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
     opacity: 0.7;
   }
+
   50% {
     transform: translateY(-8px);
     opacity: 1;
@@ -434,7 +437,9 @@ body {
   align-items: center;
 }
 
-.mic-btn, .image-btn, .send-btn {
+.mic-btn,
+.image-btn,
+.send-btn {
   flex-shrink: 0;
   height: 48px;
   width: 48px;
@@ -508,7 +513,8 @@ body {
   right: -40px;
 }
 
-.copy-btn, .edit-btn {
+.copy-btn,
+.edit-btn {
   background: rgba(255, 255, 255, 0.9);
   color: #4a5568;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -533,7 +539,8 @@ body {
   transform: translateX(0);
 }
 
-.copy-btn:hover, .edit-btn:hover {
+.copy-btn:hover,
+.edit-btn:hover {
   background: rgba(255, 255, 255, 1);
   transform: scale(1.1);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
@@ -546,9 +553,17 @@ body {
 }
 
 @keyframes successPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Edit Mode */
@@ -637,38 +652,38 @@ body {
   .app-layout.sidebar-open {
     padding-left: 0;
   }
-  
+
   .sidebar {
     width: 280px;
     min-width: 280px;
   }
-  
+
   .chat-container {
     margin: 12px;
     border-radius: 20px;
   }
-  
+
   .message-area {
     padding: 20px 24px;
   }
-  
+
   .input-area {
     padding: 20px 24px 24px;
   }
-  
+
   .chat-header {
     padding: 24px 24px 20px;
   }
-  
+
   .message {
     max-width: 85%;
     padding: 16px 20px;
   }
-  
+
   .message-actions {
     left: -36px;
   }
-  
+
   .message.user .message-actions {
     right: -36px;
   }

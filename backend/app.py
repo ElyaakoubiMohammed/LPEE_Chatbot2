@@ -23,7 +23,7 @@ import aiohttp
 from sentence_transformers import SentenceTransformer, util
 import numpy as np
 
-OLLAMA_TIMEOUT = 20
+OLLAMA_TIMEOUT = 60  # Increased timeout to 60 seconds
 
 # ========== CONFIG ==========
 OLLAMA_URL = "http://localhost:11434/api/chat"
@@ -40,6 +40,7 @@ import time
 async def fetch_ai_reply(session, messages, retries=3):
     for attempt in range(retries):
         try:
+            print(f"[DEBUG] Attempting AI reply call {attempt + 1}/{retries}")
             async with session.post(OLLAMA_URL, json={
                 "model": MODEL_NAME,
                 "messages": messages,
@@ -47,62 +48,94 @@ async def fetch_ai_reply(session, messages, retries=3):
             }, timeout=OLLAMA_TIMEOUT) as response:
                 if response.ok:
                     data = await response.json()
-                    return data.get("message", {}).get("content", "❌ Error from LLM backend.")
+                    content = data.get("message", {}).get("content", "❌ Error from LLM backend.")
+                    print(f"[DEBUG] AI reply received: {content[:100]}...")
+                    return content
                 else:
                     print(f"[ERROR] LLM backend returned status {response.status} on attempt {attempt+1}")
-                    return "❌ Error from LLM backend."
+                    await asyncio.sleep(1)
         except asyncio.TimeoutError:
             print(f"[ERROR] LLM backend call timed out on attempt {attempt+1}")
+            await asyncio.sleep(2)
         except Exception as e:
             print(f"[ERROR] LLM backend call error on attempt {attempt+1}: {e}")
-        await asyncio.sleep(0.5)
-    return "⚠️ Unable to reach backend after retries."
+            await asyncio.sleep(1)
+    return "⚠️ Unable to reach backend after retries. Please try again."
 
 
 async def fetch_real_mcp_reply(session, user_question, max_retries=5):
     mcp_prompt = [
-        {"role": "system", "content": "You are a strict MCP assistant. Reply ONLY with JSON with keys: search_needed (bool), search_query (string|null), assistant_reply (string|null). No text outside JSON."},
+        {"role": "system", "content": """You are a strict MCP assistant. Reply ONLY with JSON with keys: search_needed (bool), search_query (string|null), assistant_reply (string|null). No text outside JSON.
+
+RULES:
+- Set search_needed to FALSE for: greetings, casual conversation, general questions, personal questions, jokes, etc.
+- Set search_needed to TRUE only for: specific technical questions, questions about documents/files, questions requiring factual information from stored data
+- For search_needed=false, provide a helpful assistant_reply and set search_query to null
+- For search_needed=true, set search_query to the specific terms to search for and assistant_reply to null
+
+Examples:
+- "Hello" → {"search_needed": false, "search_query": null, "assistant_reply": "Hello! How can I help you today?"}
+- "How are you?" → {"search_needed": false, "search_query": null, "assistant_reply": "I'm doing well, thank you for asking! How can I assist you?"}
+- "What's in the VESG-2 document?" → {"search_needed": true, "search_query": "VESG-2 document content", "assistant_reply": null}"""},
         {"role": "user", "content": user_question}
     ]
 
     for attempt in range(max_retries):
-        async with session.post(OLLAMA_URL, json={"model": MODEL_NAME, "messages": mcp_prompt, "stream": False}, timeout=OLLAMA_TIMEOUT) as resp:
-            if not resp.ok:
-                continue
-            data = await resp.json()
-            content = data.get("message", {}).get("content", "")
-            try:
-                parsed = json.loads(content)
-                # Validate all fields strictly
-                if (
-                    isinstance(parsed, dict) and
-                    isinstance(parsed.get("search_needed"), bool) and
-                    (isinstance(parsed.get("search_query"), (str, type(None)))) and
-                    (isinstance(parsed.get("assistant_reply"), (str, type(None))))
-                ):
-                    return parsed
-                else:
-                    # Prepare a strict correction prompt to send to model
+        try:
+            print(f"[DEBUG] Attempting MCP call {attempt + 1}/{max_retries}")
+            async with session.post(OLLAMA_URL, json={"model": MODEL_NAME, "messages": mcp_prompt, "stream": False}, timeout=OLLAMA_TIMEOUT) as resp:
+                if not resp.ok:
+                    print(f"[ERROR] Ollama returned status {resp.status} on attempt {attempt + 1}")
+                    await asyncio.sleep(1)  # Wait before retry
+                    continue
+                
+                data = await resp.json()
+                content = data.get("message", {}).get("content", "")
+                print(f"[DEBUG] Received content: {content[:100]}...")
+                
+                try:
+                    parsed = json.loads(content)
+                    # Validate all fields strictly
+                    if (
+                        isinstance(parsed, dict) and
+                        isinstance(parsed.get("search_needed"), bool) and
+                        (isinstance(parsed.get("search_query"), (str, type(None)))) and
+                        (isinstance(parsed.get("assistant_reply"), (str, type(None))))
+                    ):
+                        print(f"[DEBUG] Valid MCP response received")
+                        return parsed
+                    else:
+                        print(f"[DEBUG] Invalid MCP response structure, retrying...")
+                        # Prepare a strict correction prompt to send to model
+                        correction_msg = {
+                            "role": "system",
+                            "content": "Your last reply was not a valid MCP JSON. Reply ONLY with valid JSON with correct keys and types."
+                        }
+                        mcp_prompt.append({"role": "assistant", "content": content})
+                        mcp_prompt.append(correction_msg)
+                except json.JSONDecodeError as e:
+                    print(f"[DEBUG] JSON decode error: {e}, retrying...")
+                    # Same as above: send correction prompt
                     correction_msg = {
                         "role": "system",
-                        "content": "Your last reply was not a valid MCP JSON. Reply ONLY with valid JSON with correct keys and types."
+                        "content": "Your last reply was invalid JSON. Reply ONLY with valid MCP JSON."
                     }
                     mcp_prompt.append({"role": "assistant", "content": content})
                     mcp_prompt.append(correction_msg)
-            except json.JSONDecodeError:
-                # Same as above: send correction prompt
-                correction_msg = {
-                    "role": "system",
-                    "content": "Your last reply was invalid JSON. Reply ONLY with valid MCP JSON."
-                }
-                mcp_prompt.append({"role": "assistant", "content": content})
-                mcp_prompt.append(correction_msg)
+                    
+        except asyncio.TimeoutError:
+            print(f"[ERROR] Ollama request timed out on attempt {attempt + 1}")
+            await asyncio.sleep(2)  # Wait longer after timeout
+        except Exception as e:
+            print(f"[ERROR] Unexpected error on attempt {attempt + 1}: {e}")
+            await asyncio.sleep(1)
 
     # After max retries, fail gracefully
+    print(f"[ERROR] MCP protocol failed after {max_retries} retries")
     return {
         "search_needed": False,
         "search_query": None,
-        "assistant_reply": "⚠️ MCP protocol failed after retries."
+        "assistant_reply": "⚠️ MCP protocol failed after retries. Please try again."
     }
 
 
@@ -316,55 +349,82 @@ def stt():
 
 @app.route('/api/chat', methods=['POST'])
 async def chat():
-    data = request.get_json()
-    messages = data.get("messages", [])
-    conversation_id = data.get("conversationId")
+    try:
+        data = request.get_json()
+        messages = data.get("messages", [])
+        conversation_id = data.get("conversationId")
 
-    if not conversation_id or not messages:
-        return jsonify({"error": "Invalid conversation data"}), 400
+        if not conversation_id or not messages:
+            return jsonify({"error": "Invalid conversation data"}), 400
 
-    user_question = messages[-1]['content']
-    print(f"[DEBUG] User question: {user_question}")
+        user_question = messages[-1]['content']
+        print(f"[DEBUG] User question: {user_question}")
 
-    async with aiohttp.ClientSession() as session:
-        mcp_response = await fetch_real_mcp_reply(session, user_question)
+        # Quick check for simple greetings/conversation that don't need file search
+        simple_greetings = ['hello', 'hi', 'hey', 'how are you', 'good morning', 'good afternoon', 'good evening', 'thanks', 'thank you']
+        is_simple_greeting = any(greeting in user_question.lower() for greeting in simple_greetings)
+        
+        if is_simple_greeting:
+            print(f"[DEBUG] Detected simple greeting, skipping MCP and file search")
+            # Generate a simple response without MCP
+            simple_prompt = [
+                {"role": "system", "content": "You are a friendly and helpful assistant. Respond naturally to greetings and casual conversation."},
+                {"role": "user", "content": user_question}
+            ]
+            
+            async with aiohttp.ClientSession() as session:
+                final_reply = await fetch_ai_reply(session, simple_prompt)
+        else:
+            # Use MCP for more complex queries
+            async with aiohttp.ClientSession() as session:
+                try:
+                    mcp_response = await fetch_real_mcp_reply(session, user_question)
+                    print(f"[DEBUG] MCP response: {mcp_response}")
 
-        final_reply = mcp_response.get("assistant_reply") or ""
+                    final_reply = mcp_response.get("assistant_reply") or ""
 
-        if mcp_response.get("search_needed"):
-            query = mcp_response["search_query"]
-            print(f"[DEBUG] MCP decided to search files with query: {query}")
+                    if mcp_response.get("search_needed"):
+                        query = mcp_response["search_query"]
+                        print(f"[DEBUG] MCP decided to search files with query: {query}")
 
-            semantic_result = semantic_search_files(query)
-            if semantic_result:
-                file_search_result = semantic_result
-            else:
-                file_search_result = search_files_for_answer_loose(query)
+                        semantic_result = semantic_search_files(query)
+                        if semantic_result:
+                            file_search_result = semantic_result
+                        else:
+                            file_search_result = search_files_for_answer_loose(query)
 
-            if file_search_result:
-                print(f"[DEBUG] File search found relevant content, enriching reply...")
+                        if file_search_result:
+                            print(f"[DEBUG] File search found relevant content, enriching reply...")
 
-                enhanced_prompt = [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a helpful assistant answering based ONLY on the following context. "
-                            "Do NOT mention documents, excerpts, or context in your answer. Just answer as if you knew it directly."
-                            f"{file_search_result}"
-                        )
-                    },
-                    {
-                        "role": "system",
-                        "content": f"Context:\n{file_search_result}"
-                    },
-                    {
-                        "role": "user",
-                        "content": user_question
-                    }
-                ]
+                            enhanced_prompt = [
+                                {
+                                    "role": "system",
+                                    "content": (
+                                        "You are a helpful assistant answering based ONLY on the following context. "
+                                        "Do NOT mention documents, excerpts, or context in your answer. Just answer as if you knew it directly."
+                                        f"{file_search_result}"
+                                    )
+                                },
+                                {
+                                    "role": "system",
+                                    "content": f"Context:\n{file_search_result}"
+                                },
+                                {
+                                    "role": "user",
+                                    "content": user_question
+                                }
+                            ]
 
-                final_reply = await fetch_ai_reply(session, enhanced_prompt)
-                print(f"[DEBUG] Final enhanced reply with docs: {final_reply}")
+                            final_reply = await fetch_ai_reply(session, enhanced_prompt)
+                            print(f"[DEBUG] Final enhanced reply with docs: {final_reply}")
+                except Exception as e:
+                    print(f"[ERROR] Error in MCP processing: {e}")
+                    # Fallback to direct AI response
+                    fallback_prompt = [
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": user_question}
+                    ]
+                    final_reply = await fetch_ai_reply(session, fallback_prompt)
 
         convos = load_conversations()
         if conversation_id not in convos:
@@ -375,8 +435,28 @@ async def chat():
         save_conversations(convos)
 
         return jsonify({"content": final_reply})
+                
+    except Exception as e:
+        print(f"[ERROR] Error in chat endpoint: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint to test Ollama connectivity"""
+    try:
+        response = requests.get("http://localhost:11434/api/tags", timeout=10)
+        if response.ok:
+            return jsonify({"status": "healthy", "ollama": "connected"})
+        else:
+            return jsonify({"status": "unhealthy", "ollama": "error", "status_code": response.status_code}), 500
+    except requests.exceptions.Timeout:
+        return jsonify({"status": "unhealthy", "ollama": "timeout"}), 500
+    except requests.exceptions.ConnectionError:
+        return jsonify({"status": "unhealthy", "ollama": "connection_error"}), 500
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "ollama": "error", "message": str(e)}), 500
 
 @app.route('/api/refresh-embeddings', methods=['POST'])
 def refresh_embeddings():
