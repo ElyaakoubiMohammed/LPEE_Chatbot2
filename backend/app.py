@@ -4,6 +4,7 @@ import uuid
 import aiohttp
 import asyncio
 import requests
+import base64
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import whisper
@@ -219,20 +220,25 @@ def load_conversations():
     if os.path.exists(CONVERSATION_FILE):
         try:
             with open(CONVERSATION_FILE, "r") as f:
-                return json.load(f)
+                data = json.load(f)
+                print(f"[DEBUG] Loaded {len(data)} conversations")
+                return data
         except Exception as e:
             print(f"Error loading conversations: {e}")
             return {}
+    print(f"[DEBUG] No conversation file found at {CONVERSATION_FILE}")
     return {}
 
 def save_conversations(data):
     print(f"Saving conversations to: {os.path.abspath(CONVERSATION_FILE)}")
+    print(f"Current working directory: {os.getcwd()}")
     try:
         with open(CONVERSATION_FILE, "w") as f:
             json.dump(data, f, indent=2)
             f.flush()
             os.fsync(f.fileno())
         print(f"Data length: {len(json.dumps(data))}")
+        print(f"Conversations saved successfully")
     except Exception as e:
         print(f"Error saving conversations: {e}")
 
@@ -582,6 +588,7 @@ def edit_message():
     conversation_id = data.get("conversationId")
     message_index = data.get("messageIndex")
     new_content = data.get("newContent")
+    has_image = data.get("hasImage", False)  # Check if the message has an image
 
     if not all([conversation_id, message_index is not None, new_content]):
         return jsonify({"error": "Missing data"}), 400
@@ -606,13 +613,42 @@ def edit_message():
 
     # Regenerate assistant reply
     try:
+        # Use llava model if the message has an image, otherwise use regular model
+        model_to_use = "llava" if has_image else MODEL_NAME
+        
+        # Prepare messages for the API call
+        messages_for_api = messages[:message_index + 1]
+        
+        # If it's an image message, we need to preserve the image data
+        if has_image and messages[message_index].get("image"):
+            # For image messages, we need to reconstruct the proper format
+            # The frontend stores the image as a data URL, but we need base64 for Ollama
+            image_data_url = messages[message_index]["image"]
+            
+            # Extract base64 data from data URL
+            if image_data_url.startswith('data:image'):
+                # Remove the data URL prefix to get just the base64 data
+                base64_data = image_data_url.split(',')[1]
+                
+                # Create the proper message format for llava
+                messages_for_api = [{
+                    "role": "user",
+                    "content": new_content,
+                    "images": [base64_data]
+                }]
+            else:
+                # Fallback to regular text if image data is corrupted
+                has_image = False
+                model_to_use = MODEL_NAME
+        
         response = requests.post(OLLAMA_URL, json={
-            "model": MODEL_NAME,
-            "messages": messages[:message_index + 1],
+            "model": model_to_use,
+            "messages": messages_for_api,
             "stream": False
         })
         ai_reply = response.json()["message"]["content"] if response.ok else "❌ Error from LLM."
     except Exception as e:
+        print(f"[ERROR] Error in edit_message: {e}")
         ai_reply = "⚠️ Unable to reach backend."
 
     # Replace AI message or append if missing
@@ -628,21 +664,36 @@ def edit_message():
     })
 
 
-
-
-
-import base64
-from flask import request, jsonify
-import aiohttp
-
 @app.route('/api/chat-with-image', methods=['POST'])
-async def chat_with_image():
+def chat_with_image():
+    print(f"[DEBUG] Image chat endpoint called")
+    print(f"[DEBUG] Request files: {list(request.files.keys())}")
+    print(f"[DEBUG] Request form: {list(request.form.keys())}")
+    
     if 'image' not in request.files:
+        print(f"[ERROR] No image in request files")
         return jsonify({'error': 'No image provided'}), 400
 
     image_file = request.files['image']
     prompt = request.form.get('prompt', '')  # Optional user message
     conversation_id = request.form.get('conversationId')  # You need to send this from frontend
+    
+    print(f"[DEBUG] Image file: {image_file.filename}")
+    print(f"[DEBUG] Prompt: {prompt}")
+    print(f"[DEBUG] Conversation ID: {conversation_id}")
+
+    if not conversation_id:
+        print(f"[ERROR] No conversation ID provided")
+        return jsonify({"error": "No conversation ID provided"}), 400
+    
+    # Validate conversation ID format
+    try:
+        conversation_uuid = uuid.UUID(str(conversation_id))
+        conversation_id = str(conversation_uuid)  # Ensure it's a string
+        print(f"[DEBUG] Validated conversation ID: {conversation_id}")
+    except ValueError:
+        print(f"[ERROR] Invalid conversation ID format: {conversation_id}")
+        return jsonify({"error": "Invalid conversation ID format"}), 400
 
     # Read image and encode as base64
     image_data = image_file.read()
@@ -655,42 +706,72 @@ async def chat_with_image():
         "images": [encoded_image]
     }]
 
-    # Send to Ollama
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(OLLAMA_URL, json={
-                "model": "llava",  # Use a vision-capable model
-                "messages": messages,
-                "stream": False
-            }) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    print("LLM Response:", result)
-                    reply = result.get("message", {}).get("content", "")
+    # Send to Ollama using synchronous requests
+    try:
+        response = requests.post(OLLAMA_URL, json={
+            "model": "llava",  # Use a vision-capable model
+            "messages": messages,
+            "stream": False
+        }, timeout=60)
+        
+        if response.status_code == 200:
+            result = response.json()
+            print("LLM Response:", result)
+            reply = result.get("message", {}).get("content", "")
 
-                    # Save conversation update here without touching the rest:
-                    convos = load_conversations()
-                    if conversation_id not in convos:
-                        return jsonify({"error": "Conversation not found"}), 404
+            # Save conversation update here without touching the rest:
+            convos = load_conversations()
+            print(f"[DEBUG] Available conversations: {list(convos.keys())}")
+            print(f"[DEBUG] Looking for conversation: {conversation_id}")
+            print(f"[DEBUG] Conversation ID type: {type(conversation_id)}")
+            print(f"[DEBUG] Available conversation IDs types: {[type(k) for k in convos.keys()]}")
+            
+            # Try to find the conversation with different key types
+            found_conversation = None
+            for key in convos.keys():
+                if str(key) == str(conversation_id):
+                    found_conversation = key
+                    break
+            
+            if found_conversation is None:
+                print(f"[ERROR] Conversation {conversation_id} not found")
+                return jsonify({"error": "Conversation not found"}), 404
+            
+            conversation_id = found_conversation  # Use the actual key from the conversations dict
 
-                    convos[conversation_id]["messages"].append({
-                        "role": "user",
-                        "content": prompt,
-                        "images": [encoded_image]
-                    })
-                    convos[conversation_id]["messages"].append({
-                        "role": "assistant",
-                        "content": reply
-                    })
+            convos[conversation_id]["messages"].append({
+                "role": "user",
+                "content": prompt,
+                "images": [encoded_image]
+            })
+            convos[conversation_id]["messages"].append({
+                "role": "assistant",
+                "content": reply
+            })
 
-                    save_conversations(convos)
+            print(f"[DEBUG] Saving conversation with {len(convos[conversation_id]['messages'])} messages")
+            save_conversations(convos)
 
-                    return jsonify({"content": reply})
-                else:
-                    error = await response.text()
-                    return jsonify({"error": "Ollama API error", "details": error}), 500
-        except Exception as e:
-            return jsonify({"error": "Error calling Ollama", "exception": str(e)}), 500
+            print(f"[DEBUG] Successfully returning response: {reply[:100]}...")
+            print(f"[DEBUG] Response status: 200")
+            return jsonify({"content": reply})
+        else:
+            error = response.text
+            print(f"[ERROR] Ollama API error: {error}")
+            print(f"[ERROR] Response status: {response.status_code}")
+            return jsonify({"error": "Ollama API error", "details": error}), 500
+    except Exception as e:
+        print(f"[ERROR] Exception in image chat: {e}")
+        print(f"[ERROR] Exception type: {type(e)}")
+        import traceback
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
+        return jsonify({"error": "Error calling Ollama", "exception": str(e)}), 500
+
+
+
+
+
+
 
 
 

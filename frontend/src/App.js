@@ -54,7 +54,14 @@ function App() {
     const file = e.target.files[0];
     if (!file) return;
     setSelectedImage(file);
-    alert("Image selected. Click Send to send it.");
+    alert("Image selected. Click Send to send it. Click the image button again to change it.");
+  };
+
+  const clearSelectedImage = () => {
+    setSelectedImage(null);
+    // Clear the file input
+    const fileInput = document.getElementById('image-upload');
+    if (fileInput) fileInput.value = '';
   };
 
   const switchConversation = (conversationId) => {
@@ -94,15 +101,20 @@ function App() {
 
   const sendMessage = async () => {
     if (!message.trim() && !selectedImage) return; // No input
+    if (!currentConversation) {
+      alert("No conversation selected. Please create a new conversation first.");
+      return;
+    }
 
     const updatedConvos = { ...conversations };
 
     if (selectedImage) {
+      // Create a data URL for the image synchronously
+      const imageDataUrl = URL.createObjectURL(selectedImage);
       updatedConvos[currentConversation].messages.push({
         role: 'user',
-        content: message
-          ? `![Uploaded Image](data:image/png;base64,${selectedImage.name})\n\n${message}`
-          : `![Uploaded Image](data:image/png;base64,${selectedImage.name})`
+        content: message || '',
+        image: imageDataUrl
       });
     } else {
       updatedConvos[currentConversation].messages.push({
@@ -125,8 +137,15 @@ function App() {
         const formData = new FormData();
         formData.append('image', selectedImage);
         if (message.trim()) formData.append('prompt', message);
+        formData.append('conversationId', String(currentConversation));
 
-        response = await axios.post('http://localhost:5000/api/chat-with-image', formData, {
+        console.log('Sending image with conversation ID:', currentConversation);
+        console.log('FormData contents:');
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+
+        response = await axios.post('http://127.0.0.1:5000/api/chat-with-image', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
 
@@ -153,8 +172,13 @@ function App() {
       };
 
       setConversations(updatedConvos);
-      setSelectedImage(null);
       setThinking(false);
+
+      // Clear the selected image after sending
+      setSelectedImage(null);
+      // Clear the file input
+      const fileInput = document.getElementById('image-upload');
+      if (fileInput) fileInput.value = '';
 
       if (updatedConvos[currentConversation].messages.length >= 4) {
         await axios.post('http://127.0.0.1:5000/api/update-title', {
@@ -165,7 +189,19 @@ function App() {
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("Failed to get a response from the server.");
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+
+      let errorMessage = "Failed to get a response from the server.";
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.status === 404) {
+        errorMessage = "Server endpoint not found. Please check if the server is running.";
+      } else if (error.response?.status === 500) {
+        errorMessage = "Server error. Please try again.";
+      }
+
+      alert(errorMessage);
       setThinking(false);
     }
   };
@@ -209,10 +245,13 @@ function App() {
 
     const updatedConvos = { ...conversations };
     const messages = [...updatedConvos[currentConversation].messages];
+    const originalMessage = messages[editingMessage];
 
+    // Preserve the image if it exists in the original message
     messages[editingMessage] = {
       role: 'user',
       content: editedMessage,
+      ...(originalMessage.image && { image: originalMessage.image }) // Preserve image if it exists
     };
 
     messages.splice(editingMessage + 1); // Remove below
@@ -230,6 +269,7 @@ function App() {
         conversationId: currentConversation,
         messageIndex: editingMessage,
         newContent: editedMessage,
+        hasImage: !!originalMessage.image // Send flag to backend
       });
 
       if (res.data.error) {
@@ -387,7 +427,14 @@ function App() {
                       onChange={(e) => setEditedMessage(e.target.value)}
                     />
                   ) : (
-                    msg.content
+                    <>
+                      {msg.image && (
+                        <div className="message-image">
+                          <img src={msg.image} alt="Uploaded image" style={{ maxWidth: '300px', maxHeight: '300px', borderRadius: '8px' }} />
+                        </div>
+                      )}
+                      {msg.content && <div className="message-text">{msg.content}</div>}
+                    </>
                   )}
                 </div>
 
@@ -425,6 +472,15 @@ function App() {
         </section>
 
         <footer className="input-area">
+          {selectedImage && (
+            <div className="image-preview">
+              <img src={URL.createObjectURL(selectedImage)} alt="Preview" />
+              <div className="image-preview-info">
+                <span>{selectedImage.name}</span>
+                <button onClick={clearSelectedImage} className="remove-preview-btn">✕</button>
+              </div>
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             value={message}
@@ -476,9 +532,22 @@ function App() {
             </button>
 
             {/* Image Upload Button */}
-            <label htmlFor="image-upload" className="image-btn" title="Upload image">
-              <span>🖼️</span>
-            </label>
+            {selectedImage ? (
+              <div className="image-selected">
+                <span title={`Selected: ${selectedImage.name}`}>📷</span>
+                <button
+                  className="clear-image-btn"
+                  onClick={clearSelectedImage}
+                  title="Clear image"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <label htmlFor="image-upload" className="image-btn" title="Upload image">
+                <span>🖼️</span>
+              </label>
+            )}
             <input
               type="file"
               id="image-upload"
