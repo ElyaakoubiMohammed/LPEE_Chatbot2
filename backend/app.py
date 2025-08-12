@@ -637,9 +637,17 @@ def edit_message():
                     "images": [base64_data]
                 }]
             else:
-                # Fallback to regular text if image data is corrupted
-                has_image = False
-                model_to_use = MODEL_NAME
+                # If it's already base64 data (from old format), use it directly
+                base64_data = image_data_url
+                messages_for_api = [{
+                    "role": "user",
+                    "content": new_content,
+                    "images": [base64_data]
+                }]
+        else:
+            # Fallback to regular text if image data is corrupted
+            has_image = False
+            model_to_use = MODEL_NAME
         
         response = requests.post(OLLAMA_URL, json={
             "model": model_to_use,
@@ -739,10 +747,12 @@ def chat_with_image():
             
             conversation_id = found_conversation  # Use the actual key from the conversations dict
 
+            # Convert base64 to data URL format for frontend compatibility
+            data_url = f"data:image/jpeg;base64,{encoded_image}"
             convos[conversation_id]["messages"].append({
                 "role": "user",
                 "content": prompt,
-                "images": [encoded_image]
+                "image": data_url
             })
             convos[conversation_id]["messages"].append({
                 "role": "assistant",

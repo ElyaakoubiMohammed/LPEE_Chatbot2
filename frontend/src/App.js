@@ -127,6 +127,14 @@ function App() {
     setThinking(true);
     setConversations(updatedConvos);
 
+    // Clear the selected image immediately to hide the preview
+    if (selectedImage) {
+      setSelectedImage(null);
+      // Clear the file input
+      const fileInput = document.getElementById('image-upload');
+      if (fileInput) fileInput.value = '';
+    }
+
     try {
       let response;
       let isImage = false;
@@ -173,12 +181,6 @@ function App() {
 
       setConversations(updatedConvos);
       setThinking(false);
-
-      // Clear the selected image after sending
-      setSelectedImage(null);
-      // Clear the file input
-      const fileInput = document.getElementById('image-upload');
-      if (fileInput) fileInput.value = '';
 
       if (updatedConvos[currentConversation].messages.length >= 4) {
         await axios.post('http://127.0.0.1:5000/api/update-title', {
