@@ -21,7 +21,7 @@
     ]
   },
   "1f7de893-1eed-4b80-af45-68b1ea3a85ab": {
-    "title": "Untitled",
+    "title": "User Inquiry: Software Troubleshooting Guidance",
     "messages": [
       {
         "role": "user",
@@ -30,6 +30,51 @@
       {
         "role": "assistant",
         "content": "Hello! How can I assist you today?"
+      },
+      {
+        "role": "user",
+        "content": "what's up"
+      },
+      {
+        "role": "assistant",
+        "content": "I am here and ready to assist you."
+      },
+      {
+        "role": "user",
+        "content": "1+1?"
+      },
+      {
+        "role": "assistant",
+        "content": "2"
+      },
+      {
+        "role": "user",
+        "content": "woah"
+      },
+      {
+        "role": "assistant",
+        "content": "Please provide a specific request or question for me to assist you."
+      },
+      {
+        "role": "user",
+        "content": "5 times 5 please, exoplain it like saumel L jackson ok?"
+      },
+      {
+        "role": "assistant",
+        "content": " Alrighty then! You want the product of five and five, let's call that \"P\" for short. So, here's the deal:\n\nFirst off, we got this thing called 5, that's our base number, right? Now, we need to find out how many times it takes that 5 to make 5 more times itself. Get what I'm sayin'?\n\nSo, let's see... if we have 5, and we keep adding 5 over and over again until we have 25 (cause that's 5 times 5), how many times did we add the 5 to get there?\n\nTo find out, we subtract our starting point (5) from our final goal (25). And if you do the math, you'll see it takes 20 more times of adding 5 to reach 25. So, P is 20. That's your product, partner. Boom!"
+      }
+    ]
+  },
+  "5514f81d-9a1a-4a9a-a776-49681df55d85": {
+    "title": "Untitled",
+    "messages": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "How may I assist you today?"
       }
     ]
   }

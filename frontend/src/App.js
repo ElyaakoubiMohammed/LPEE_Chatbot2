@@ -1,484 +1,495 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { 
-  MessageCircle, 
-  Plus, 
-  Send, 
-  Mic, 
-  Image as ImageIcon, 
-  Edit3, 
-  Save, 
-  X, 
-  Trash2,
-  Bot,
-  User,
-  Sparkles,
-  Zap,
-  Brain,
-  Cpu
-} from 'lucide-react';
 import './App.css';
 
 function App() {
   const [conversations, setConversations] = useState({});
-  const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [currentConversation, setCurrentConversation] = useState(null);
   const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [thinking, setThinking] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [editedMessage, setEditedMessage] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);  // Voice Recording State
   const [isRecording, setIsRecording] = useState(false);
-  const [editingMessageIndex, setEditingMessageIndex] = useState(null);
-  const [editingContent, setEditingContent] = useState('');
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
-  const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
 
+  // Load conversations on start
   useEffect(() => {
     fetchConversations();
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [conversations, currentConversationId]);
+    const adjustHeight = () => {
+      const textarea = textareaRef.current;
+      textarea.style.height = 'auto'; // Reset height
+      textarea.style.height = `${textarea.scrollHeight}px`; // Auto-resize
+    };
+    adjustHeight();
+  }, [message]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const fetchConversations = () => {
+    axios.get('http://127.0.0.1:5000/api/conversations')
+      .then(response => {
+        const raw = response.data;
+        const parsed = {};
+        Object.entries(raw).forEach(([id, convo]) => {
+          parsed[id] = {
+            title: convo.title || "New conversation",
+            messages: convo.messages || []
+          };
+        });
+        setConversations(parsed);
+        if (Object.keys(parsed).length > 0 && !currentConversation) {
+          setCurrentConversation(Object.keys(parsed)[0]);
+        }
+      })
+      .catch(err => console.error("Error fetching convos:", err));
   };
 
-  const fetchConversations = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/conversations');
-      setConversations(response.data);
-      
-      if (Object.keys(response.data).length > 0 && !currentConversationId) {
-        setCurrentConversationId(Object.keys(response.data)[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-    }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSelectedImage(file);
+    alert("Image selected. Click Send to send it.");
   };
 
-  const createNewConversation = async () => {
-    try {
-      const response = await axios.post('http://localhost:5000/api/conversations');
-      const newId = response.data.id;
-      
-      await fetchConversations();
-      setCurrentConversationId(newId);
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-    }
+  const switchConversation = (conversationId) => {
+    setCurrentConversation(conversationId);
+    if (window.innerWidth < 768) setSidebarOpen(false);
   };
 
-  const deleteConversation = async (conversationId) => {
-    try {
-      await axios.delete(`http://localhost:5000/api/conversations/${conversationId}`);
-      await fetchConversations();
-      
-      if (conversationId === currentConversationId) {
-        const remainingIds = Object.keys(conversations).filter(id => id !== conversationId);
-        setCurrentConversationId(remainingIds.length > 0 ? remainingIds[0] : null);
-      }
-    } catch (error) {
-      console.error('Error deleting conversation:', error);
-    }
+  const createNewConversation = () => {
+    axios.post('http://127.0.0.1:5000/api/conversations')
+      .then(response => {
+        const newId = response.data.id;
+        setConversations(prev => ({
+          ...prev,
+          [newId]: {
+            title: "New conversation",
+            messages: []
+          }
+        }));
+        setCurrentConversation(newId);
+        if (window.innerWidth < 768) setSidebarOpen(false);
+      })
+      .catch(err => console.error("Error creating convo:", err));
+  };
+
+  const deleteConversation = (conversationId) => {
+    axios.delete(`http://127.0.0.1:5000/api/conversations/${conversationId}`)
+      .then(() => {
+        const updatedConvos = { ...conversations };
+        delete updatedConvos[conversationId];
+        setConversations(updatedConvos);
+        if (currentConversation === conversationId) {
+          setCurrentConversation(null);
+        }
+      })
+      .catch(err => console.error("Error deleting convo:", err));
   };
 
   const sendMessage = async () => {
-    if (!message.trim() || !currentConversationId || isLoading) return;
+    if (!message.trim() && !selectedImage) return; // No input
 
-    const userMessage = message;
+    const updatedConvos = { ...conversations };
+
+    if (selectedImage) {
+      updatedConvos[currentConversation].messages.push({
+        role: 'user',
+        content: message
+          ? `![Uploaded Image](data:image/png;base64,${selectedImage.name})\n\n${message}`
+          : `![Uploaded Image](data:image/png;base64,${selectedImage.name})`
+      });
+    } else {
+      updatedConvos[currentConversation].messages.push({
+        role: 'user',
+        content: message,
+      });
+    }
+
     setMessage('');
-    setIsLoading(true);
+    setThinking(true);
+    setConversations(updatedConvos);
 
     try {
-      const currentMessages = conversations[currentConversationId]?.messages || [];
-      const response = await axios.post('http://localhost:5000/api/chat', {
-        messages: [...currentMessages, { role: 'user', content: userMessage }],
-        conversationId: currentConversationId
+      let response;
+      let isImage = false;
+
+      if (selectedImage) {
+        isImage = true;
+
+        const formData = new FormData();
+        formData.append('image', selectedImage);
+        if (message.trim()) formData.append('prompt', message);
+
+        response = await axios.post('http://localhost:5000/api/chat-with-image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        console.log('Image API response data:', response.data);
+
+
+      } else {
+        response = await axios.post('http://127.0.0.1:5000/api/chat', {
+          conversationId: currentConversation,
+          messages: updatedConvos[currentConversation].messages,
+        });
+      }
+
+      const newMessages = [...updatedConvos[currentConversation].messages];
+
+      newMessages.push({
+        role: 'assistant',
+        content: response.data.content || "⚠️ Empty response from model.",
       });
 
-      await fetchConversations();
-      
-      if (conversations[currentConversationId]?.title === "Untitled") {
-        await updateTitle(currentConversationId);
+      updatedConvos[currentConversation] = {
+        ...updatedConvos[currentConversation],
+        messages: newMessages,
+      };
+
+      setConversations(updatedConvos);
+      setSelectedImage(null);
+      setThinking(false);
+
+      if (updatedConvos[currentConversation].messages.length >= 4) {
+        await axios.post('http://127.0.0.1:5000/api/update-title', {
+          conversationId: currentConversation,
+          messages: updatedConvos[currentConversation].messages,
+        });
+
       }
     } catch (error) {
-      console.error('Error sending message:', error);
-    } finally {
-      setIsLoading(false);
+      console.error("Error sending message:", error);
+      alert("Failed to get a response from the server.");
+      setThinking(false);
     }
   };
 
-  const updateTitle = async (conversationId) => {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (!e.shiftKey) {
+        e.preventDefault(); // Prevent newline
+        sendMessage();
+      }
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.activeElement;
+      if (btn) {
+        btn.classList.add("copied");
+        btn.textContent = "✔️";
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.textContent = "📋";
+        }, 1200);
+      }
+    }).catch(err => {
+      console.error("Failed to copy text: ", err);
+    });
+  };
+
+  const handleRightClick = (e, messageIndex) => {
+    e.preventDefault();
+    if (e.target.closest('.message.user')) {
+      setEditingMessage(messageIndex);
+      setEditedMessage(conversations[currentConversation].messages[messageIndex].content);
+    }
+  };
+
+  const handleEditSave = async () => {
+    if (!editedMessage.trim() || thinking) return;
+    setThinking(true);
+
+    const updatedConvos = { ...conversations };
+    const messages = [...updatedConvos[currentConversation].messages];
+
+    messages[editingMessage] = {
+      role: 'user',
+      content: editedMessage,
+    };
+
+    messages.splice(editingMessage + 1); // Remove below
+
+    updatedConvos[currentConversation] = {
+      ...updatedConvos[currentConversation],
+      messages: [...messages], // Ensure immutability
+    };
+
+    setConversations(updatedConvos); // Immediate UI update
+    setEditingMessage(null); // Hide edit box immediately
+
     try {
-      const messages = conversations[conversationId]?.messages || [];
-      await axios.post('http://localhost:5000/api/update-title', {
-        conversationId,
-        messages
+      const res = await axios.post('http://127.0.0.1:5000/api/edit-message', {
+        conversationId: currentConversation,
+        messageIndex: editingMessage,
+        newContent: editedMessage,
       });
-      await fetchConversations();
-    } catch (error) {
-      console.error('Error updating title:', error);
+
+      if (res.data.error) {
+        alert("Edit failed: " + res.data.error);
+      } else {
+        const finalConvos = { ...updatedConvos };
+        finalConvos[currentConversation].messages.push({
+          role: 'assistant',
+          content: res.data.content,
+        });
+        setConversations(finalConvos);
+      }
+    } catch (err) {
+      console.error("Error editing message:", err);
+      alert("Error editing message");
+    } finally {
+      setThinking(false);
+      setEditedMessage('');
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+  // ===== VOICE INPUT LOGIC =====
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
-
-        try {
-          const response = await axios.post('http://localhost:5000/api/stt', formData);
-          setMessage(response.data.text);
-        } catch (error) {
-          console.error('Error with speech-to-text:', error);
-        }
-
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+  // Replace startRecording and stopRecording with toggleRecording:
+  const toggleRecording = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+      }
       setIsRecording(false);
+    } else {
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          audioChunksRef.current.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+
+          const formData = new FormData();
+          formData.append('audio', blob, 'voice.wav');
+
+          try {
+            const res = await axios.post('http://127.0.0.1:5000/api/stt', formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            });
+
+            if (res.data.text) {
+              setMessage(prev => prev + ' ' + res.data.text.trim());
+            }
+          } catch (err) {
+            console.error("STT request failed:", err);
+            alert("❌ Error converting speech to text");
+          }
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error("Microphone error:", err);
+        alert("⚠️ Could not access microphone.");
+      }
     }
   };
 
-  const handleImageUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file || !currentConversationId) return;
 
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('prompt', message || 'What do you see in this image?');
-    formData.append('conversationId', currentConversationId);
-
-    setMessage('');
-    setIsLoading(true);
-
-    try {
-      const response = await axios.post('http://localhost:5000/api/chat-with-image', formData);
-      await fetchConversations();
-    } catch (error) {
-      console.error('Error uploading image:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const startEditing = (index, content) => {
-    setEditingMessageIndex(index);
-    setEditingContent(content);
-  };
-
-  const saveEdit = async () => {
-    if (!currentConversationId || editingMessageIndex === null) return;
-
-    try {
-      const response = await axios.post('http://localhost:5000/api/edit-message', {
-        conversationId: currentConversationId,
-        messageIndex: editingMessageIndex,
-        newContent: editingContent
-      });
-
-      await fetchConversations();
-      setEditingMessageIndex(null);
-      setEditingContent('');
-    } catch (error) {
-      console.error('Error editing message:', error);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingMessageIndex(null);
-    setEditingContent('');
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const currentMessages = currentConversationId ? conversations[currentConversationId]?.messages || [] : [];
+  // ===== RETURN JSX =====
 
   return (
-    <div className="app">
-      {/* Animated Background */}
-      <div className="animated-bg">
-        <div className="bg-orb orb-1"></div>
-        <div className="bg-orb orb-2"></div>
-        <div className="bg-orb orb-3"></div>
-        <div className="bg-orb orb-4"></div>
-        <div className="floating-particles">
-          {[...Array(20)].map((_, i) => (
-            <div key={i} className={`particle particle-${i + 1}`}></div>
-          ))}
-        </div>
-      </div>
-
-      <div className="app-container">
-        {/* Sidebar */}
-        <div className="sidebar">
-          <div className="sidebar-header">
-            <div className="brand">
-              <div className="brand-icon">
-                <Brain className="icon" />
-                <div className="icon-glow"></div>
+    <div className={`app-layout ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      {/* SIDEBAR */}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+        <div className="sidebar-content">
+          <h1 className="app-title">LPEE</h1>
+          <button className="new-conversation-btn" onClick={createNewConversation}>+ New Chat</button>
+          <div className="conversations-list">
+            {Object.keys(conversations).map((cid) => (
+              <div key={cid} className="conversation-item">
+                <button
+                  className="conversation-btn"
+                  onClick={() => switchConversation(cid)}
+                >
+                  {conversations[cid]?.title || "Chat"}
+                </button>
+                <button
+                  className="delete-btn"
+                  onClick={() => deleteConversation(cid)}
+                >
+                  🗑️
+                </button>
               </div>
-              <div className="brand-text">
-                <h1>LPEE AI</h1>
-                <span className="brand-subtitle">Neural Assistant</span>
-              </div>
-            </div>
-          </div>
-
-          <button className="new-chat-btn" onClick={createNewConversation}>
-            <div className="btn-content">
-              <Plus className="btn-icon" />
-              <span>New Conversation</span>
-              <Sparkles className="btn-accent" />
-            </div>
-            <div className="btn-shimmer"></div>
-          </button>
-
-          <div className="conversations">
-            <div className="conversations-header">
-              <h3>Recent Chats</h3>
-              <div className="chat-count">{Object.keys(conversations).length}</div>
-            </div>
-            
-            <div className="conversations-list">
-              {Object.entries(conversations).map(([id, conv]) => (
-                <div key={id} className="conversation-item">
-                  <button
-                    className={`conversation-btn ${currentConversationId === id ? 'active' : ''}`}
-                    onClick={() => setCurrentConversationId(id)}
-                  >
-                    <div className="conv-icon">
-                      <MessageCircle />
-                    </div>
-                    <div className="conv-content">
-                      <span className="conv-title">{conv.title}</span>
-                      <span className="conv-preview">
-                        {conv.messages.length > 0 
-                          ? conv.messages[conv.messages.length - 1].content.substring(0, 50) + '...'
-                          : 'No messages yet'
-                        }
-                      </span>
-                    </div>
-                    {currentConversationId === id && <div className="active-indicator"></div>}
-                    }
-                  </button>
-                  <button
-                    className="delete-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteConversation(id);
-                    }}
-                  >
-                    <Trash2 />
-                  </button>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
+        <button className="toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          {sidebarOpen ? '«' : '»'}
+        </button>
+      </aside>
 
-        {/* Main Chat Area */}
-        <div className="main-content">
-          <div className="chat-header">
-            <div className="header-left">
-              <div className="chat-avatar">
-                <Cpu className="avatar-icon" />
-                <div className="avatar-pulse"></div>
-              </div>
-              <div className="chat-info">
-                <h2>AI Assistant</h2>
-                <div className="status">
-                  <div className="status-dot"></div>
-                  <span>Online & Ready</span>
-                </div>
-              </div>
-            </div>
-            <div className="header-right">
-              <div className="neural-activity">
-                <div className="neural-dot"></div>
-                <div className="neural-dot"></div>
-                <div className="neural-dot"></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="messages-container">
-            {currentMessages.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-animation">
-                  <div className="floating-brain">
-                    <Brain className="brain-icon" />
-                    <div className="brain-waves">
-                      <div className="wave wave-1"></div>
-                      <div className="wave wave-2"></div>
-                      <div className="wave wave-3"></div>
-                    </div>
-                  </div>
-                </div>
-                <h3>Ready to assist you</h3>
-                <p>Start a conversation and let's explore ideas together</p>
-                <div className="quick-actions">
-                  <button className="quick-btn">Ask a question</button>
-                  <button className="quick-btn">Get help</button>
-                  <button className="quick-btn">Start creating</button>
-                </div>
-              </div>
-            ) : (
-              <div className="messages">
-                {currentMessages.map((msg, index) => (
-                  <div key={index} className={`message-wrapper ${msg.role}`}>
-                    <div className="message">
-                      <div className="message-avatar">
-                        {msg.role === 'user' ? (
-                          <User className="avatar-icon" />
-                        ) : (
-                          <Bot className="avatar-icon" />
-                        )}
-                        <div className="avatar-glow"></div>
-                      </div>
-                      
-                      <div className="message-content">
-                        <div className="message-header">
-                          <span className="sender">{msg.role === 'user' ? 'You' : 'AI Assistant'}</span>
-                          <span className="timestamp">now</span>
-                        </div>
-                        
-                        {editingMessageIndex === index ? (
-                          <div className="edit-container">
-                            <textarea
-                              value={editingContent}
-                              onChange={(e) => setEditingContent(e.target.value)}
-                              className="edit-textarea"
-                            />
-                            <div className="edit-actions">
-                              <button onClick={saveEdit} className="save-btn">
-                                <Save size={16} />
-                                Save
-                              </button>
-                              <button onClick={cancelEdit} className="cancel-btn">
-                                <X size={16} />
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="message-text">{msg.content}</div>
-                        )}
-                        
-                        {msg.role === 'user' && editingMessageIndex !== index && (
-                          <button
-                            className="edit-btn"
-                            onClick={() => startEditing(index, msg.content)}
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {isLoading && (
-                  <div className="message-wrapper assistant">
-                    <div className="message">
-                      <div className="message-avatar">
-                        <Bot className="avatar-icon" />
-                        <div className="avatar-glow loading"></div>
-                      </div>
-                      <div className="message-content">
-                        <div className="message-header">
-                          <span className="sender">AI Assistant</span>
-                          <span className="timestamp">thinking...</span>
-                        </div>
-                        <div className="typing-indicator">
-                          <div className="typing-dot"></div>
-                          <div className="typing-dot"></div>
-                          <div className="typing-dot"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
+      {/* MAIN CONTENT */}
+      <main className="chat-container">
+        <header className="chat-header">
+          <h2>{conversations[currentConversation]?.title || "Chat"}</h2>
+        </header>
+        <section className="message-area">
+          {currentConversation &&
+            conversations[currentConversation].messages?.length === 0 && (
+              <div className="empty-state">No messages yet. Start the conversation.</div>
             )}
-          </div>
-
-          <div className="input-area">
-            <div className="input-container">
-              <div className="input-wrapper">
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type your message..."
-                  className="message-input"
-                  rows="1"
-                />
-                
-                <div className="input-actions">
+          {currentConversation &&
+            conversations[currentConversation].messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`message ${msg.role} animate${editingMessage === index ? ' editing' : ''}`}
+                onContextMenu={(e) => handleRightClick(e, index)}
+              >
+                <div className="message-actions">
                   <button
-                    className={`action-btn mic-btn ${isRecording ? 'recording' : ''}`}
-                    onMouseDown={startRecording}
-                    onMouseUp={stopRecording}
-                    onMouseLeave={stopRecording}
+                    className="copy-btn"
+                    data-tooltip="Copy"
+                    onClick={() => copyToClipboard(msg.content)}
+                    aria-label="Copy message"
                   >
-                    <Mic />
-                    {isRecording && <div className="recording-pulse"></div>}
-                    }
+                    📋
                   </button>
-                  
-                  <label className="action-btn image-btn">
-                    <ImageIcon />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: 'none' }}
-                    />
-                  </label>
-                  
-                  <button
-                    className="send-btn"
-                    onClick={sendMessage}
-                    disabled={!message.trim() || isLoading}
-                  >
-                    <Send />
-                    <div className="send-ripple"></div>
-                  </button>
+                  {msg.role === 'user' && (
+                    <button
+                      className="edit-btn"
+                      data-tooltip="Edit"
+                      onClick={() => {
+                        setEditingMessage(index);
+                        setEditedMessage(msg.content);
+                      }}
+                      aria-label="Edit message"
+                    >
+                      ✏️
+                    </button>
+                  )}
                 </div>
+
+                <div className="message-content">
+                  {editingMessage === index ? (
+                    <textarea
+                      autoFocus
+                      value={editedMessage}
+                      onChange={(e) => setEditedMessage(e.target.value)}
+                    />
+                  ) : (
+                    msg.content
+                  )}
+                </div>
+
+                {editingMessage === index && (
+                  <>
+                    <button
+                      className="save-edit-btn"
+                      onClick={handleEditSave}
+                      disabled={thinking}
+                    >
+                      {thinking ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      className="cancel-edit-btn"
+                      onClick={() => {
+                        setEditingMessage(null);
+                        setEditedMessage('');
+                      }}
+                      disabled={thinking}
+                    >
+                      <span role="img" aria-label="Cancel">✖️</span> Cancel
+                    </button>
+                  </>
+                )}
               </div>
+            ))}
+          {thinking && (
+            <div className="thinking-indicator">
+              <span>•</span>
+              <span>•</span>
+              <span>•</span>
             </div>
+          )}
+        </section>
+
+        <footer className="input-area">
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your message..."
+            className="message-input"
+            rows={1}
+            disabled={editingMessage !== null}
+          />
+          <div className="input-buttons">
+            <button
+              className={`mic-btn ${isRecording ? 'active' : ''}`}
+              onClick={toggleRecording}
+              title={isRecording ? "Stop recording" : "Start recording"}
+            >
+              {isRecording ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="6" y="6" width="12" height="12" />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 1v11" />
+                  <path d="M19 11a7 7 0 0 1-14 0" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              )}
+            </button>
+
+            {/* Image Upload Button */}
+            <label htmlFor="image-upload" className="image-btn" title="Upload image">
+              🖼️
+            </label>
+            <input
+              type="file"
+              id="image-upload"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => handleImageUpload(e)}
+            />
+
+            <button className="send-btn" onClick={sendMessage}>➤</button>
           </div>
-        </div>
-      </div>
+        </footer>
+      </main>
     </div>
   );
 }
