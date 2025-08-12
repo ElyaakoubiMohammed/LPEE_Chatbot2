@@ -184,10 +184,10 @@ function App() {
       const btn = document.activeElement;
       if (btn) {
         btn.classList.add("copied");
-        btn.textContent = "✔️";
+        btn.innerHTML = "✓";
         setTimeout(() => {
           btn.classList.remove("copied");
-          btn.textContent = "📋";
+          btn.innerHTML = "📋";
         }, 1200);
       }
     }).catch(err => {
@@ -362,7 +362,7 @@ function App() {
                     onClick={() => copyToClipboard(msg.content)}
                     aria-label="Copy message"
                   >
-                    📋
+                    <span>📋</span>
                   </button>
                   {msg.role === 'user' && (
                     <button
@@ -374,7 +374,7 @@ function App() {
                       }}
                       aria-label="Edit message"
                     >
-                      ✏️
+                      <span>✏️</span>
                     </button>
                   )}
                 </div>
@@ -408,7 +408,8 @@ function App() {
                       }}
                       disabled={thinking}
                     >
-                      <span role="img" aria-label="Cancel">✖️</span> Cancel
+                      <span role="img" aria-label="Cancel">✕</span>
+                      Cancel
                     </button>
                   </>
                 )}
@@ -476,7 +477,7 @@ function App() {
 
             {/* Image Upload Button */}
             <label htmlFor="image-upload" className="image-btn" title="Upload image">
-              🖼️
+              <span>🖼️</span>
             </label>
             <input
               type="file"
@@ -486,7 +487,9 @@ function App() {
               onChange={(e) => handleImageUpload(e)}
             />
 
-            <button className="send-btn" onClick={sendMessage}>➤</button>
+            <button className="send-btn" onClick={sendMessage}>
+              <span>→</span>
+            </button>
           </div>
         </footer>
       </main>
