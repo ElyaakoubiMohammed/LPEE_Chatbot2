@@ -57,6 +57,12 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (currentConversation) {
+      localStorage.setItem("currentConversation", currentConversation)
+    }
+  }, [currentConversation])
+
+  useEffect(() => {
     const adjustHeight = () => {
       const textarea = textareaRef.current
       textarea.style.height = "auto" // Reset height
@@ -85,7 +91,11 @@ function App() {
           }
         })
         setConversations(parsed)
-        if (Object.keys(parsed).length > 0 && !currentConversation) {
+
+        const savedConversation = localStorage.getItem("currentConversation")
+        if (savedConversation && parsed[savedConversation]) {
+          setCurrentConversation(savedConversation)
+        } else if (Object.keys(parsed).length > 0 && !currentConversation) {
           setCurrentConversation(Object.keys(parsed)[0])
         }
       })
@@ -137,6 +147,7 @@ function App() {
         delete updatedConvos[conversationId]
         setConversations(updatedConvos)
         if (currentConversation === conversationId) {
+          localStorage.removeItem("currentConversation")
           setCurrentConversation(null)
         }
       })
