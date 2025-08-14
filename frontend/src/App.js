@@ -4,6 +4,39 @@ import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import "./App.css"
 
+const WelcomeScreen = () => (
+  <div className="welcome-screen">
+    <div className="welcome-logo"></div>
+    <h1 className="welcome-title">Welcome to LPEE</h1>
+    <p className="welcome-subtitle">
+      Your intelligent conversation partner. Start a new chat to begin exploring ideas, getting answers, and having
+      meaningful conversations.
+    </p>
+    <div className="welcome-features">
+      <div className="welcome-feature">
+        <span className="welcome-feature-icon">💬</span>
+        <div className="welcome-feature-title">Natural Conversations</div>
+        <div className="welcome-feature-desc">Chat naturally with AI assistance</div>
+      </div>
+      <div className="welcome-feature">
+        <span className="welcome-feature-icon">🖼️</span>
+        <div className="welcome-feature-title">Image Analysis</div>
+        <div className="welcome-feature-desc">Upload and discuss images</div>
+      </div>
+      <div className="welcome-feature">
+        <span className="welcome-feature-icon">🎤</span>
+        <div className="welcome-feature-title">Voice Input</div>
+        <div className="welcome-feature-desc">Speak your messages naturally</div>
+      </div>
+      <div className="welcome-feature">
+        <span className="welcome-feature-icon">✏️</span>
+        <div className="welcome-feature-title">Edit & Refine</div>
+        <div className="welcome-feature-desc">Edit messages and regenerate responses</div>
+      </div>
+    </div>
+  </div>
+)
+
 function App() {
   const [conversations, setConversations] = useState({})
   const [currentConversation, setCurrentConversation] = useState(null)
@@ -17,8 +50,8 @@ function App() {
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const textareaRef = useRef(null)
+  const messageAreaRef = useRef(null)
 
-  // Load conversations on start
   useEffect(() => {
     fetchConversations()
   }, [])
@@ -31,6 +64,13 @@ function App() {
     }
     adjustHeight()
   }, [message])
+
+  useEffect(() => {
+    if (messageAreaRef.current && currentConversation && conversations[currentConversation]?.messages?.length > 0) {
+      const messageArea = messageAreaRef.current
+      messageArea.scrollTop = messageArea.scrollHeight
+    }
+  }, [conversations, currentConversation, thinking])
 
   const fetchConversations = () => {
     axios
@@ -299,7 +339,6 @@ function App() {
 
   // ===== VOICE INPUT LOGIC =====
 
-  // Replace startRecording and stopRecording with toggleRecording:
   const toggleRecording = async () => {
     if (isRecording) {
       // Stop recording
@@ -350,38 +389,52 @@ function App() {
     }
   }
 
-  const WelcomeScreen = () => (
-    <div className="welcome-screen">
-      <div className="welcome-logo"></div>
-      <h1 className="welcome-title">Welcome to LPEE</h1>
-      <p className="welcome-subtitle">
-        Your intelligent conversation partner. Start a new chat to begin exploring ideas, getting answers, and having
-        meaningful conversations.
-      </p>
-      <div className="welcome-features">
-        <div className="welcome-feature">
-          <span className="welcome-feature-icon">💬</span>
-          <div className="welcome-feature-title">Natural Conversations</div>
-          <div className="welcome-feature-desc">Chat naturally with AI assistance</div>
-        </div>
-        <div className="welcome-feature">
-          <span className="welcome-feature-icon">🖼️</span>
-          <div className="welcome-feature-title">Image Analysis</div>
-          <div className="welcome-feature-desc">Upload and discuss images</div>
-        </div>
-        <div className="welcome-feature">
-          <span className="welcome-feature-icon">🎤</span>
-          <div className="welcome-feature-title">Voice Input</div>
-          <div className="welcome-feature-desc">Speak your messages naturally</div>
-        </div>
-        <div className="welcome-feature">
-          <span className="welcome-feature-icon">✏️</span>
-          <div className="welcome-feature-title">Edit & Refine</div>
-          <div className="welcome-feature-desc">Edit messages and regenerate responses</div>
-        </div>
-      </div>
-    </div>
-  )
+  // ===== CODE BLOCK FORMATTING =====
+
+  const formatMessageWithCodeBlocks = (content) => {
+    if (!content) return content
+
+    // Split content by code blocks (\`\`\`language or just \`\`\`)
+    const parts = content.split(/(```[\s\S]*?```|`[^`\n]+`)/g)
+
+    return parts.map((part, index) => {
+      // Check if this part is a code block
+      if (part.startsWith("```") && part.endsWith("```")) {
+        // Multi-line code block
+        const codeContent = part.slice(3, -3)
+        const lines = codeContent.split("\n")
+        const language = lines[0].trim()
+        const code = lines.slice(1).join("\n")
+
+        return (
+          <div key={index} className="code-block">
+            {language && <div className="code-language">{language}</div>}
+            <pre>
+              <code>{code}</code>
+            </pre>
+            <button className="copy-code-btn" onClick={() => copyToClipboard(code)} title="Copy code">
+              📋
+            </button>
+          </div>
+        )
+      } else if (part.startsWith("`") && part.endsWith("`")) {
+        // Inline code
+        return (
+          <code key={index} className="inline-code">
+            {part.slice(1, -1)}
+          </code>
+        )
+      } else {
+        // Regular text - preserve line breaks
+        return part.split("\n").map((line, lineIndex, array) => (
+          <span key={`${index}-${lineIndex}`}>
+            {line}
+            {lineIndex < array.length - 1 && <br />}
+          </span>
+        ))
+      }
+    })
+  }
 
   // ===== RETURN JSX =====
 
@@ -417,7 +470,7 @@ function App() {
         <header className="chat-header">
           <h2>{conversations[currentConversation]?.title || "Chat"}</h2>
         </header>
-        <section className="message-area">
+        <section className="message-area" ref={messageAreaRef}>
           {!currentConversation ||
             (currentConversation && conversations[currentConversation]?.messages?.length === 0) ? (
             <WelcomeScreen />
@@ -466,13 +519,13 @@ function App() {
                           />
                         </div>
                       )}
-                      {msg.content && <div className="message-text">{msg.content}</div>}
+                      {msg.content && <div className="message-text">{formatMessageWithCodeBlocks(msg.content)}</div>}
                     </>
                   )}
                 </div>
 
                 {editingMessage === index && (
-                  <>
+                  <div className="edit-buttons">
                     <button className="save-edit-btn" onClick={handleEditSave} disabled={thinking}>
                       {thinking ? "Saving..." : "Save"}
                     </button>
@@ -484,12 +537,9 @@ function App() {
                       }}
                       disabled={thinking}
                     >
-                      <span role="img" aria-label="Cancel">
-                        ✕
-                      </span>
                       Cancel
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
             ))

@@ -680,6 +680,161 @@ body {
   box-shadow: 0 6px 20px rgba(0, 191, 255, 0.4);
 }
 
+/* Completely redesigned edit interface with sophisticated styling */
+.message.editing {
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.12) 0%, rgba(255, 20, 147, 0.08) 100%);
+  border: 2px solid rgba(255, 140, 0, 0.4);
+  box-shadow: 0 12px 40px rgba(255, 140, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: scale(1.02);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.message.editing::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.1), transparent);
+  animation: editShimmer 2s infinite;
+}
+
+@keyframes editShimmer {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
+}
+
+.message.editing textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(20, 0, 40, 0.4) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 2px solid rgba(255, 140, 0, 0.3);
+  border-radius: 16px;
+  color: #ffffff;
+  font-family: "Geist", sans-serif;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+  /* Hide scrollbar for all browsers */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+.message.editing textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.message.editing textarea:focus {
+  border-color: rgba(255, 140, 0, 0.7);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(20, 0, 40, 0.5) 100%);
+  box-shadow: 0 0 0 4px rgba(255, 140, 0, 0.25), 0 12px 40px rgba(255, 140, 0, 0.2);
+  transform: translateY(-3px);
+}
+
+.message.editing textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* Enhanced button container with better spacing and alignment */
+.edit-buttons {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+.save-edit-btn {
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.save-edit-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.save-edit-btn:hover::before {
+  left: 100%;
+}
+
+.save-edit-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+}
+
+.cancel-edit-btn {
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.cancel-edit-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.cancel-edit-btn:hover::before {
+  left: 100%;
+}
+
+.cancel-edit-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);
+}
+
 /* Beautiful welcome screen */
 .welcome-screen {
   display: flex;
@@ -862,41 +1017,56 @@ body {
 .image-preview {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: rgba(255, 140, 0, 0.1);
-  border: 1px solid rgba(255, 140, 0, 0.3);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.15), rgba(255, 100, 50, 0.1));
+  border: 1px solid rgba(255, 140, 0, 0.4);
+  border-radius: 16px;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 32px rgba(255, 140, 0, 0.1);
 }
 
 .image-preview img {
-  width: 40px;
-  height: 40px;
+  width: 120px;
+  height: 120px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.image-preview img:hover {
+  transform: scale(1.05);
 }
 
 .image-preview-info {
   flex-grow: 1;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 
+/* Hide the filename span */
+.image-preview-info span {
+  display: none;
+}
+
 .remove-preview-btn {
-  padding: 4px 8px;
-  background: rgba(255, 0, 0, 0.2);
-  border: 1px solid rgba(255, 0, 0, 0.3);
-  border-radius: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(255, 50, 50, 0.15));
+  border: 1px solid rgba(255, 0, 0, 0.4);
+  border-radius: 8px;
   color: #ff6b6b;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 .remove-preview-btn:hover {
-  background: rgba(255, 0, 0, 0.3);
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 50, 50, 0.25));
   transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(255, 0, 0, 0.2);
 }
 
 .message-input {
@@ -958,7 +1128,11 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg,
+      transparent,
+      transparent 100px,
+      rgba(255, 255, 255, 0.01) 101px,
+      rgba(255, 255, 255, 0.01) 102px);
   transition: left 0.5s;
 }
 
@@ -1088,4 +1262,102 @@ textarea:focus-visible {
 .message-image img {
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Adding sophisticated code block styling for ChatGPT-like code display */
+.code-block {
+  position: relative;
+  margin: 16px 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 30, 0.9) 100%);
+  border: 1px solid rgba(255, 140, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.code-language {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.15) 0%, rgba(255, 20, 147, 0.1) 100%);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ff8c00;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 20px;
+  overflow-x: auto;
+  background: transparent;
+  font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Source Code Pro", monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+.code-block code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-family: inherit;
+  color: inherit;
+  white-space: pre;
+}
+
+.copy-code-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  opacity: 0.7;
+}
+
+.copy-code-btn:hover {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.2) 0%, rgba(255, 20, 147, 0.15) 100%);
+  border-color: rgba(255, 140, 0, 0.4);
+  transform: scale(1.05);
+}
+
+.inline-code {
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.15) 0%, rgba(255, 20, 147, 0.1) 100%);
+  border: 1px solid rgba(255, 140, 0, 0.3);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Source Code Pro", monospace;
+  font-size: 0.9em;
+  color: #ff8c00;
+  backdrop-filter: blur(5px);
+}
+
+/* Enhanced scrollbar for code blocks */
+.code-block pre::-webkit-scrollbar {
+  height: 8px;
+}
+
+.code-block pre::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.code-block pre::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.4), rgba(255, 20, 147, 0.4));
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.code-block pre::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(255, 140, 0, 0.6), rgba(255, 20, 147, 0.6));
 }
